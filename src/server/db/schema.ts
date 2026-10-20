@@ -1,4 +1,13 @@
-import { pgTable, text, integer, jsonb, timestamp, uniqueIndex, check } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  integer,
+  jsonb,
+  timestamp,
+  uniqueIndex,
+  index,
+  check,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import type { RecipeData } from "../../lib/recipe";
 export const memberships = pgTable("memberships", {
@@ -45,15 +54,26 @@ export const outbox = pgTable("dispatch_outbox", {
   attempts: integer().notNull().default(0),
   deliveredAt: timestamp({ withTimezone: true }),
 });
-export const recipes = pgTable("recipes", {
-  id: text().primaryKey(),
-  ownerId: text()
-    .notNull()
-    .references(() => memberships.id),
-  version: integer().notNull().default(1),
-  original: jsonb().$type<RecipeData>().notNull(),
-  edited: jsonb().$type<RecipeData>().notNull(),
-});
+export const recipes = pgTable(
+  "recipes",
+  {
+    id: text().primaryKey(),
+    ownerId: text()
+      .notNull()
+      .references(() => memberships.id),
+    version: integer().notNull().default(1),
+    original: jsonb().$type<RecipeData>().notNull(),
+    edited: jsonb().$type<RecipeData>().notNull(),
+    creationKey: text(),
+    creationHash: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("recipe_owner_creation_key").on(t.ownerId, t.creationKey),
+    index("recipe_owner_id").on(t.ownerId, t.id),
+    check("recipe_positive_version", sql`${t.version} > 0`),
+  ],
+);
 export const mediaObjects = pgTable("media_objects", {
   id: text().primaryKey(),
   ownerId: text()

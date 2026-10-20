@@ -1,6 +1,6 @@
 # apat
 
-A private recipe notebook built around saved Instagram recipes. **This branch is a phase-0 acquisition experiment and local review prototype, not a live recipe-import service.**
+A private recipe notebook built around saved Instagram recipes. **This branch adds the private recipe foundation. External Neon/Google setup is approval-gated; live recipe imports are not enabled.**
 
 ## Run locally
 
@@ -11,7 +11,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Open http://127.0.0.1:3026. Review/edit the authored sample, change servings, export JSON, or use the cooking view. Draft changes stay in this browser. No Google login, model, real import, Neon connection or account isolation is connected to this UI. No environment variables are required.
+Open http://127.0.0.1:3026. Without configuration, the account library explains that secure setup is pending. `/sample` offers the authored browser-only review/edit/scaling/export/cooking demo. With approved branch-specific configuration and membership, the private library uses server-verified Neon Auth and Drizzle/Postgres. See [setup and approval gates](docs/NEON-SETUP.md); no credentials are needed for the local fixture/test suite.
 
 ## What we learned
 
@@ -37,4 +37,4 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Real Google/Neon/storage/model/runtime/iOS checks remain gated. Nothing deploys automatically; no Vercel project is linked.
+See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Real Google/Neon/storage/model/runtime/iOS checks remain gated. Existing Vercel production is deployed; this feature branch disables automatic preview deployment. No service configuration is written by builds/tests.

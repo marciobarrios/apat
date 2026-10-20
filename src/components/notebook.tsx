@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { BookOpen, Download, Leaf, Pencil, Plus, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Recipe, sampleRecipe, scaleQuantity, type RecipeData } from "@/lib/recipe";
@@ -24,21 +24,51 @@ function readStoredRecipe(raw: string | null): RecipeData {
     return sampleRecipe;
   }
 }
-export function Notebook() {
-  const raw = useSyncExternalStore(subscribe, storedRecipe, () => null);
+type CloudRecipe = {
+  recipe: RecipeData;
+  save: (recipe: RecipeData) => Promise<void>;
+  export: () => Promise<void>;
+};
+export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
+  const raw = useSyncExternalStore(
+    cloud ? () => () => {} : subscribe,
+    cloud ? () => null : storedRecipe,
+    () => null,
+  );
   const stored = useMemo(() => readStoredRecipe(raw), [raw]);
   const [localRecipe, setRecipe] = useState<RecipeData | null>(null);
-  const recipe = localRecipe ?? stored;
+  const recipe = cloud?.recipe ?? localRecipe ?? stored;
   const [draft, setDraft] = useState<RecipeData>(sampleRecipe);
   const [editing, setEditing] = useState(false);
   const [cooking, setCooking] = useState(false);
-  const [servings, setServings] = useState(2);
+  const [servings, setServings] = useState(recipe.servings ?? 2);
+  const [pending, setPending] = useState(false);
+  const saving = useRef(false);
+  const Main = cloud ? "div" : "main";
   const [notice, setNotice] = useState("");
   const [link, setLink] = useState("");
-  function save() {
+  async function save() {
+    if (saving.current) return;
     const parsed = Recipe.safeParse(draft);
     if (!parsed.success) {
       setNotice("Add a title, every ingredient name and each instruction before saving.");
+      return;
+    }
+    if (cloud) {
+      saving.current = true;
+      setPending(true);
+      try {
+        await cloud.save(parsed.data);
+        setNotice("Saved to your private notebook.");
+        setEditing(false);
+      } catch (error) {
+        setNotice(
+          error instanceof Error ? error.message : "Save failed. Your draft is still here.",
+        );
+      } finally {
+        saving.current = false;
+        setPending(false);
+      }
       return;
     }
     try {
@@ -52,7 +82,15 @@ export function Notebook() {
     setRecipe(parsed.data);
     setEditing(false);
   }
-  function exportRecipe() {
+  async function exportRecipe() {
+    if (cloud) {
+      try {
+        await cloud.export();
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : "Export failed.");
+      }
+      return;
+    }
     const url = URL.createObjectURL(
       new Blob([JSON.stringify(recipe, null, 2)], { type: "application/json" }),
     );
@@ -63,83 +101,94 @@ export function Notebook() {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <a href="#main" className="wordmark">
-          apat<span>Recipes worth keeping.</span>
-        </a>
-        <nav aria-label="Main">
-          <a href="#recipe">
-            <BookOpen size={19} />
-            Your notebook
+    <div className={cloud ? "recipe-detail" : "shell"}>
+      {!cloud && (
+        <aside className="sidebar">
+          <a href="#main" className="wordmark">
+            apat<span>Recipes worth keeping.</span>
           </a>
-          <a href="#capture">
-            <Plus size={19} />
-            Save a recipe
-          </a>
-        </nav>
-        <p className="sidebar-note">
-          A little less scrolling.
-          <br />A little more cooking.
-        </p>
-        <span className="local-tag">Local prototype</span>
-      </aside>
-      <main id="main">
-        <div className="prototype-note">
-          Early preview • The recipe is an original test fixture. Google login, video imports and AI
-          are not connected.
-        </div>
-        <header>
-          <div>
-            <p className="intro">Your kitchen, collected.</p>
-            <h1>
-              A place for the recipes
-              <br />
-              you want to make.
-            </h1>
-          </div>
-          <Leaf className="leaf" size={70} strokeWidth={1} />
-        </header>
-        <section id="capture" className="capture" aria-labelledby="capture-title">
-          <div>
-            <h2 id="capture-title">From your saved videos to your table.</h2>
-            <p>Instagram comes first. We’re testing what a public link can reliably tell us.</p>
-          </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setNotice(
-                "Live imports are not enabled yet. No request or model call was made. Try the sample review below.",
-              );
-            }}
-          >
-            <label htmlFor="link">Instagram recipe link</label>
-            <div className="input-row">
-              <input
-                id="link"
-                type="url"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                placeholder="https://www.instagram.com/reel/…"
-                required
-              />
-              <Button type="submit">Check availability</Button>
+          <nav aria-label="Main">
+            <a href="#recipe">
+              <BookOpen size={19} />
+              Your notebook
+            </a>
+            <a href="#capture">
+              <Plus size={19} />
+              Save a recipe
+            </a>
+          </nav>
+          <p className="sidebar-note">
+            A little less scrolling.
+            <br />A little more cooking.
+          </p>
+          <span className="local-tag">Local prototype</span>
+        </aside>
+      )}
+      <Main id={cloud ? undefined : "main"}>
+        {!cloud && (
+          <>
+            <div className="prototype-note">
+              Early preview • The recipe is an original test fixture. Google login, video imports
+              and AI are not connected.
             </div>
-          </form>
-        </section>
+            <header>
+              <div>
+                <p className="intro">Your kitchen, collected.</p>
+                <h1>
+                  A place for the recipes
+                  <br />
+                  you want to make.
+                </h1>
+              </div>
+              <Leaf className="leaf" size={70} strokeWidth={1} />
+            </header>
+            <section id="capture" className="capture" aria-labelledby="capture-title">
+              <div>
+                <h2 id="capture-title">From your saved videos to your table.</h2>
+                <p>Instagram comes first. We’re testing what a public link can reliably tell us.</p>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setNotice(
+                    "Live imports are not enabled yet. No request or model call was made. Try the sample review below.",
+                  );
+                }}
+              >
+                <label htmlFor="link">Instagram recipe link</label>
+                <div className="input-row">
+                  <input
+                    id="link"
+                    type="url"
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="https://www.instagram.com/reel/…"
+                    required
+                  />
+                  <Button type="submit">Check availability</Button>
+                </div>
+              </form>
+            </section>
+          </>
+        )}
         <output className="notice" aria-live="polite">
           {notice}
         </output>
         <section className="recipe" id="recipe" aria-labelledby="recipe-title">
           <div className="recipe-top">
-            <span className="evidence-badge">Sample recipe · text evidence only</span>
+            <span className="evidence-badge">
+              {cloud
+                ? "Private recipe · original evidence preserved"
+                : "Sample recipe · text evidence only"}
+            </span>
             <div className="actions">
-              <Button variant="outline" onClick={exportRecipe}>
+              <Button variant="outline" disabled={pending} onClick={exportRecipe}>
                 <Download />
                 Export
               </Button>
               <Button
                 variant="outline"
+                disabled={pending}
                 onClick={() => {
                   setDraft(recipe);
                   setEditing(true);
@@ -151,6 +200,7 @@ export function Notebook() {
                 Review & edit
               </Button>
               <Button
+                disabled={pending}
                 onClick={() => {
                   setCooking(!cooking);
                   setEditing(false);
@@ -162,7 +212,7 @@ export function Notebook() {
             </div>
           </div>
           {editing ? (
-            <div className="editor">
+            <fieldset className="editor" disabled={pending}>
               <h2>Review your recipe</h2>
               <p>Keep what the source says. Leave unknown amounts empty.</p>
               <label htmlFor="title">Recipe title</label>
@@ -231,9 +281,12 @@ export function Notebook() {
                 </div>
               ))}
               <div className="actions">
-                <Button onClick={save}>Save changes</Button>
+                <Button disabled={pending} onClick={save}>
+                  {pending ? "Saving…" : "Save changes"}
+                </Button>
                 <Button
                   variant="outline"
+                  disabled={pending}
                   onClick={() => {
                     setEditing(false);
                     setDraft(recipe);
@@ -243,15 +296,17 @@ export function Notebook() {
                   Cancel editing
                 </Button>
               </div>
-            </div>
+            </fieldset>
           ) : (
             <>
               <h2 id="recipe-title" className="recipe-name">
                 {recipe.title}
               </h2>
-              <p className="recipe-deck">
-                A simple pan, a squeeze of lemon, and something good to eat.
-              </p>
+              {!cloud && (
+                <p className="recipe-deck">
+                  A simple pan, a squeeze of lemon, and something good to eat.
+                </p>
+              )}
               <div className="facts">
                 <span>{recipe.servings ?? "Not stated"} servings in source</span>
                 <span>
@@ -259,13 +314,16 @@ export function Notebook() {
                   {recipe.cookMinutes === null ? "not stated" : `${recipe.cookMinutes} minutes`}
                 </span>
               </div>
-              <div className="review-note">
-                <strong>Worth checking</strong>
-                <p>
-                  {recipe.warnings.join(" ")} No video has been analyzed. This sample is written for
-                  testing, not imported from a creator.
-                </p>
-              </div>
+              {(!cloud || recipe.warnings.length > 0) && (
+                <div className="review-note">
+                  <strong>Worth checking</strong>
+                  <p>
+                    {recipe.warnings.join(" ")}{" "}
+                    {!cloud &&
+                      "No video has been analyzed. This sample is written for testing, not imported from a creator."}
+                  </p>
+                </div>
+              )}
               <div className={cooking ? "recipe-columns cooking" : "recipe-columns"}>
                 <section>
                   <div className="ingredients-heading">
@@ -329,11 +387,13 @@ export function Notebook() {
             </>
           )}
         </section>
-        <footer>
-          Private by design. Honest about what’s known.
-          <span>Prototype data stays in this browser.</span>
-        </footer>
-      </main>
+        {!cloud && (
+          <footer>
+            Private by design. Honest about what’s known.
+            <span>Prototype data stays in this browser.</span>
+          </footer>
+        )}
+      </Main>
     </div>
   );
 }

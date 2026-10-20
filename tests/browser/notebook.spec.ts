@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 test("review, save, reload, export and preserve evidence", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/sample");
   await page.getByRole("button", { name: "Review & edit" }).click();
   await page.getByLabel("Recipe title").fill("My lemon chickpeas");
   await page.getByRole("button", { name: "Save changes" }).click();
@@ -13,7 +13,7 @@ test("review, save, reload, export and preserve evidence", async ({ page }) => {
   expect((await downloaded).suggestedFilename()).toBe("apat-recipe.json");
 });
 test("invalid edits remain reviewable and cancel restores original", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/sample");
   await page.getByRole("button", { name: "Review & edit" }).click();
   await page.getByLabel("Recipe title").fill("");
   await page.getByRole("button", { name: "Save changes" }).click();
@@ -26,7 +26,7 @@ test("repeated captures make no network or paid calls", async ({ page }) => {
   page.on("request", (request) => {
     if (!request.url().startsWith("http://127.0.0.1:3026")) outgoing.push(request.url());
   });
-  await page.goto("/");
+  await page.goto("/sample");
   await page
     .getByLabel("Instagram recipe link")
     .fill("https://www.instagram.com/reel/DWJJrpcCLLP/");
@@ -39,7 +39,7 @@ test("repeated captures make no network or paid calls", async ({ page }) => {
 test("serving scaling leaves time and unknowns unchanged; cooking has touch controls", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/sample");
   await page.getByLabel("Servings", { exact: true }).selectOption("4");
   await expect(page.getByText("800 g", { exact: true })).toBeVisible();
   await expect(page.getByText("To taste / not stated", { exact: true })).toBeVisible();
@@ -49,7 +49,7 @@ test("serving scaling leaves time and unknowns unchanged; cooking has touch cont
   await expect(page.getByText("Cooking time: not stated")).toBeVisible();
 });
 test("keyboard flow and responsive page without overflow", async ({ page }, info) => {
-  await page.goto("/");
+  await page.goto("/sample");
   await page.getByRole("button", { name: "Review & edit" }).focus();
   await page.keyboard.press("Enter");
   await expect(page.getByLabel("Recipe title")).toBeVisible();
