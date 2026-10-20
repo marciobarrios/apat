@@ -1,8 +1,8 @@
 # Private recipe foundation and setup gates
 
-This milestone implements the account and recipe foundation from [PLAN.md, Phase 1](PLAN.md#phase-1-secure-vertical-slice-pending). It is ready for an approved development integration test. It is not connected to an external database in this branch. AI extraction, Instagram ingestion, storage, paid processing, merging and deployment are outside this milestone.
+This milestone implements the account and recipe foundation from [PLAN.md, Phase 1](PLAN.md#phase-1-secure-vertical-slice-pending). It is ready for an approved development integration test. Real development database setup has now started after explicit approval; the application connection is still gated by Auth cleanup and secure credential activation. See [current setup status](NEON-DEV-STATUS.md). AI extraction, Instagram ingestion, storage, paid processing, merging and deployment are outside this milestone.
 
-## Reconciled state — October 20, 2026
+## Reconciled state before approved setup — October 20, 2026
 
 - Local `main` and GitHub `main`: `c6a3e733372b6e3b52133679092d28e739198502`, checked before implementation. Existing main checkout was clean; the earlier acquisition worktree was preserved.
 - Neon: reused metadata for project `apat`, `sparkling-base-11618556`, AWS Frankfurt (`aws-eu-central-1`). Only branch found: `production`, `br-misty-paper-bacbzyhs`.
@@ -22,7 +22,7 @@ The home page is an account library. Invited users can manually add recipes, pre
 
 ## Approval A: isolated Neon development setup
 
-**Pending, not attempted.** Proposed exact destination: a new `dev-neon-private-library` branch inside existing project `sparkling-base-11618556`, Frankfurt. Do not create another project or use the production connection.
+**Approved and partially completed.** See [current setup status](NEON-DEV-STATUS.md) for the actual branch, real migrations, restricted roles and remaining blockers. The originally proposed destination was: a new `dev-neon-private-library` branch inside existing project `sparkling-base-11618556`, Frankfurt. Do not create another project or use the production connection.
 
 Before execution, obtain approval for these concrete actions:
 
