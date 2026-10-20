@@ -69,6 +69,23 @@ describe("public source boundary", () => {
         url,
       ).mediaReferences,
     ).toHaveLength(1));
+  it.each(["   ", " Instagram ", "\n Log in \t"])(
+    "rejects padded or empty JSON-LD placeholder %j",
+    (description) =>
+      expect(() =>
+        parseInstagramHtml(
+          `<script type="application/ld+json">${JSON.stringify({ "@type": "VideoObject", description })}</script>`,
+          url,
+        ),
+      ).toThrow("unexpected_html"),
+  );
+  it("trims JSON-LD caption boundaries while preserving meaningful whitespace", () =>
+    expect(
+      parseInstagramHtml(
+        '<script type="application/ld+json">{"@type":"VideoObject","description":"  Soup\\nSalt to taste.  "}</script>',
+        url,
+      ).caption,
+    ).toBe("Soup\nSalt to taste."));
   it("tolerates broken JSON with valid caption", () =>
     expect(
       parseInstagramHtml(
