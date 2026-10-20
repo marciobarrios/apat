@@ -1,5 +1,7 @@
 # Neon development setup — October 20, 2026
 
+Current target: the user subsequently approved configuring the existing production branch. See [actual production setup and remaining handoff](NEON-PRODUCTION-STATUS.md). The development history below is preserved; do not activate its credentials for the current test.
+
 The user approved the development-only setup and selected `marciobarrios@gmail.com` as the single test account. This approval does not authorize Vercel changes, production changes, paid commitments, merging or deployment.
 
 ## Completed on the real development database

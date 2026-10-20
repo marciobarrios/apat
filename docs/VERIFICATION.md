@@ -26,3 +26,11 @@ See [NEON-SETUP.md](NEON-SETUP.md) for the exact external state and setup approv
 - Vitest: **107 tests pass**, including shared private API/Drizzle services on PGlite. A runtime role with read-only membership access can save/edit; membership writes and unrelated import reads are denied. All 24 vendored lint suites pass.
 - Playwright: **30 checks pass**, at desktop and iPhone-sized Chromium viewports. Sample review plus mocked account creation/reload/edit/export, cancelled/failed/repeated saves, optimistic conflict handling, Google sign-in errors, invite denial, account-switch clearing and retryable sign-out. Mock account screenshots visually reviewed; no real Google or Neon persistence test is claimed.
 - No external migrations, credentials, OAuth/access changes, production writes, merge or deployment. Missing configuration fails closed in the built app. This is the local account/recipe foundation, not the complete import vertical slice.
+
+## Approved production setup checkpoint — October 21, 2026
+
+Remote Neon checks confirm both Drizzle journal hashes, restricted NOLOGIN app/schema roles, denied app membership writes/recipe deletes/Auth and import reads/DDL, and zero app/Auth rows. Pooling is enabled. Credential activation, real Google login, enrollment and authenticated persistence remain pending the [secure local handoff](NEON-PRODUCTION-STATUS.md).
+
+The local setup command was exercised in a disposable directory with a mocked pg client and a pseudo-terminal: success preserves development configuration, cancellation stops without activation, provider errors do not echo the supplied fixture password, changed role state refuses credential reset, and non-TTY execution refuses before creating staged configuration. Generated files have mode 0600; the owner password is absent from persisted files/output. This is local handoff verification, not real Neon authentication.
+
+Fresh local checks at this checkpoint: lint, format, TypeScript, 107 Vitest tests, all 24 lint-rule suites and all 30 desktop/mobile mocked-account browser checks passed. The default Turbopack build could not bind its local worker port in this execution environment (EPERM), including the escalated attempt. `next build --webpack` passed and supplied the build for these browser checks. CI retains the default Turbopack command; no builder configuration was changed.
