@@ -1,0 +1,13 @@
+{
+  "ignorePatterns": [
+    "tools/**",
+    "pnpm-lock.yaml",
+    "drizzle/meta/**",
+    "research/**",
+    "artifacts/**",
+    ".next/**",
+    "next-env.d.ts",
+    "test-results/**",
+    "playwright-report/**"
+  ]
+}

@@ -1,0 +1,3 @@
+# Prototype direction
+
+A practical recipe notebook: pale sage #e7eee6 sidebar, white #ffffff recipe sheet, off-white #fafbf8 canvas, dark green #234c3e actions, amber #fff8e6 evidence warnings, ink #24312a. Georgia display and system sans controls use no remote font service. The PDF explicitly requested editorial warmth; green avoids a generic terracotta landing page. One recipe sheet carries the focus, with ingredients and instructions aligned side by side, stacking on mobile. No invented food photograph, no fake testimonials or counters. English is provisional; source language remains separate. The sample is authored for tests, not a falsely attributed imported dish.
