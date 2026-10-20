@@ -27,22 +27,30 @@ The following files exist only in the isolated worktree, are ignored by Git, and
 
 Credentials were generated inside the local process and written directly to protected files. Their values did not appear in command arguments or output. The URLs are not usable until the roles are activated. Builds and ordinary CI do not activate credentials, apply migrations or contact Neon.
 
-## Blocker 1: empty Auth schema cleanup approval
+## Auth cleanup completed; fresh provisioning still blocked
 
-Managed Better Auth provisioning returned HTTP 409 because the schema-only branch contains the copied, empty `neon_auth` schema. Auth is not enabled on the development branch. All nine tables have been verified empty. Neon requires removing that schema before provisioning a fresh integration.
+The user explicitly approved permanent deletion of the empty development `neon_auth` schema and its nine empty tables. Immediately before deletion, branch identity was checked, all nine row counts were zero, and no external schema dependencies were found. Cleanup locked the tables and repeated the object-count, emptiness and dependency guards in the same transaction before `DROP SCHEMA neon_auth CASCADE`. This succeeded only on `br-patient-dew-bamsovs7`.
 
-**Pending, not attempted:** `DROP SCHEMA neon_auth CASCADE` on **only** `br-patient-dew-bamsovs7`. This is a new destructive schema-cleanup action, so explicit approval is needed. Production `br-misty-paper-bacbzyhs` must not be targeted. After approval, recheck emptiness, remove only this empty copied schema, provision fresh development Better Auth, reconcile shared development Google OAuth and the exact local origin, then securely write the public branch Auth URL.
+Fresh Better Auth provisioning then returned HTTP 412, `permission denied for database neondb`. Follow-up reads confirm that the development Auth schema is absent and Auth is not enabled. The database owner is still `neondb_owner` and has CREATE privilege; internal `neon_auth`/`neon_service` roles can connect but lack database CREATE. This is diagnostic evidence, not proof of the provider's exact failing statement. No internal provider-role grants were broadened and provisioning was not blindly retried.
 
-`marciobarrios@gmail.com` has not been created or enrolled yet. No substitute test account was used. Enrollment must follow a verified Google sign-in and stable subject mapping, or a specifically approved supported directory operation. Real sign-in/cancel/sign-out and invited/uninvited behavior remain pending.
+`marciobarrios@gmail.com` has not been created or enrolled. No substitute test account was used. Real sign-in and authenticated persistence remain pending.
+
+## Recommended target after the user's latest direction
+
+The user said the unused production branch may be used if simpler. Read-only reconciliation of `production` (`br-misty-paper-bacbzyhs`) found its existing Better Auth enabled, shared development Google OAuth present, email/password disabled, localhost permitted, zero auth users/sessions/accounts, and no public application tables or Drizzle migration journal. Reusing this existing Auth is the simplest sound path. No production schema/data was deleted or changed.
+
+The earlier approval for persistent credentials/configuration named the development branch. Before setting ongoing local access to the different production target, approve that exact branch for restricted app/migration credentials, protected local URLs/Auth URL/cookie configuration and enrollment of the verified approved Google subject. Additive migrations target the verified-empty application schema; they must not modify the existing managed Auth schema. Vercel settings, deployment, merging and paid changes remain outside scope. Preserve the development branch and its prepared files until this target decision is settled.
 
 ## Blocker 2: secure credential activation handoff
 
 Automatic approval review rejected a proposed local setup command because it embedded a bootstrap database password in command arguments. That command did not execute. It was not retried with encoded or indirect secret transport.
 
-The safer alternative is prepared: credentials are generated locally, stored only in the protected files above, and the user applies the protected activation SQL through the development Neon SQL Editor. The agent has not transmitted this credential-bearing SQL through a tool. This handoff does not require posting a secret in chat or creating an account-wide CLI/API credential. The broader setup approval remains valid; it does not authorize exposing a password in tool arguments.
+The denial was specifically about password exposure in command arguments; it did not prohibit activation itself. The rejected command was not retried. Locally generated activation credentials remain in the protected files above, without transmitting their values through tools during diagnosis.
+
+A standard local PostgreSQL client can read the protected activation file from disk and execute it without secret-bearing arguments or output, once that local client has a securely supplied, branch-scoped administrative setup connection. That authenticated local channel is currently missing: the prepared app/migration roles are NOLOGIN, no authenticated Neon CLI or local Neon API key is present, and the exposed MCP SQL tool accepts SQL text rather than a local file/reference. The SQL Editor toolbar exposes no file-import control. A local-client route would need a one-time secure authentication handoff (hidden local input or a supported secret-manager mount), not user copying raw credential SQL. Account-wide CLI authorization would be a different access scope and must not be silently introduced. The existing approval still covers development activation; the proposed production target requires its own exact persistent-access approval.
 
 Once the user confirms activation, verify the local runtime connection without printing credentials; ensure the role's privileges remain restricted. Then exercise actual Drizzle save/reload/export and two-owner denial with authored test data, keeping those results separate from mocked-auth browser tests. The current evidence proves real migrations and database grants, not authenticated application persistence or cross-device access.
 
 ## Production and hosting boundary
 
-No SQL was executed on production. No production rows, Auth settings, credentials or grants were changed. The existing Vercel project was not configured or deployed. Feature-branch automatic deployment remains disabled in `vercel.json`. PR #2 remains draft; no merge or auto-merge was requested.
+Only read-only catalog/count queries were executed on production. No production rows, Auth settings, credentials or grants were changed. The existing Vercel project was not configured or deployed. Feature-branch automatic deployment remains disabled in `vercel.json`. PR #2 remains draft; no merge or auto-merge was requested.
