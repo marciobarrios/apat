@@ -7,6 +7,7 @@ import { z } from "zod";
 import { isPermittedMediaReference } from "../src/server/sources/instagram";
 import { isPublicAddress } from "../src/server/sources/public-html";
 import { researchTarget } from "./research-target";
+import { validateMp4Response } from "../src/server/sources/mp4";
 const run = promisify(execFile);
 const target = researchTarget();
 const candidates = z
@@ -43,9 +44,11 @@ for (const item of candidates) {
           lookup: (_host, _options, cb) => cb(null, address.address, address.family),
         },
         (res) => {
-          if (res.statusCode !== 200 || !res.headers["content-type"]?.startsWith("video/mp4")) {
+          try {
+            validateMp4Response(res.statusCode, res.headers["content-type"]);
+          } catch (error) {
             res.destroy();
-            reject(new Error("unsupported_response"));
+            reject(error);
             return;
           }
           let size = 0;
