@@ -1,6 +1,8 @@
 # apat
 
-A private recipe notebook built around saved Instagram recipes. **This branch adds the private recipe foundation. External Neon/Google setup is approval-gated; live recipe imports are not enabled.**
+A private recipe notebook built around saved Instagram recipes. **Google login and private manual recipe storage in Neon are verified locally on this branch. Instagram/Gemini imports are the next unfinished milestone. The public Vercel site has not been updated.**
+
+To resume work, read [the current implementation plan](docs/PLAN.md). It records what is done, what is missing and the next steps in order; no separate milestone briefing is needed.
 
 ## Run locally
 
@@ -21,10 +23,10 @@ All six supplied Instagram Reels yielded caption text from direct public HTML. C
 
 - `src/server/sources`: bounded, DNS-pinned public HTML extraction; no auth cookies or private endpoints.
 - `src/lib/recipe.ts`: schema with original phrases, null quantities and evidence.
-- `src/server/db`: mandatory Drizzle schema and local Postgres admission/ownership experiment.
-- `src/components`: shadcn/Base UI review prototype; Tailwind 4.
+- `src/server/db`: connected owner-scoped Drizzle recipe services plus separate local import-admission groundwork.
+- `src/components`: private manual library and a separate authored sample/review/cooking demo; Tailwind 4 and shadcn/Base UI.
 - `scripts`: deliberate local acquisition experiments; not exposed as web APIs.
-- `drizzle`: generated migration, applied only to disposable local PGlite in tests.
+- `drizzle`: reviewed migrations validated locally and applied to the explicitly approved Neon branch. No startup/build/CI migration.
 - `research/`: ignored evidence, source handoff and temporary acquisition outputs. Never upload creator media or signed URLs.
 
 ```sh
@@ -37,4 +39,4 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Real Google/Neon/storage/model/runtime/iOS checks remain gated. Existing Vercel production is deployed; this feature branch disables automatic preview deployment. No service configuration is written by builds/tests.
+See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Real one-account local Google/Neon persistence is verified; storage/model/worker, two-real-account, cross-device and physical-iOS checks remain pending. Existing Vercel production is deployed; this feature branch disables automatic preview deployment. No service configuration is written by builds/tests.

@@ -1,4 +1,6 @@
-# Verification — 2026-10-20
+# Verification history — October 20–21, 2026
+
+This is a chronological evidence log. Earlier “not connected”/“pending” statements describe their original checkpoints; the final real-OAuth checkpoint records the latest verification. Use [PLAN.md](PLAN.md) for the consolidated current state and remaining work.
 
 ## Local checks
 

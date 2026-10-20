@@ -1,5 +1,7 @@
 # Approved production-branch setup — October 21, 2026
 
+**Current checkpoint:** secure activation, real Google sign-in/enrollment and one-account save/reload/edit/export are verified locally; see the final section below. Earlier sections preserve setup history. Do not repeat credential activation/enrollment from an earlier checkpoint. [PLAN.md](PLAN.md) is the ordered resume handoff.
+
 The user explicitly approved configuring the existing `apat` production branch after the development Auth provisioning failure. This permits additive app migrations, restricted database credentials, protected local configuration and enrollment of the verified `marciobarrios@gmail.com` subject. It does not authorize a Vercel environment change, public deployment, merge, paid resource, production Auth deletion or a different Google account.
 
 ## Completed on Neon
@@ -10,7 +12,7 @@ The user explicitly approved configuring the existing `apat` production branch a
 - Created SQL-managed `apat_prod_schema` and `apat_prod_app`, initially **NOLOGIN** (subsequently activated through the completed local handoff below). Neither has superuser, database/role creation, replication, RLS bypass or inherited role membership. The schema role owns app objects/journal and can create in the public schema; it cannot create databases or access managed Auth. The owner has membership in the schema role for explicit migration execution.
 - App grants are public schema usage, memberships SELECT and recipes SELECT/INSERT/UPDATE. Remote privilege checks confirm membership UPDATE, recipe DELETE, import SELECT, managed Auth SELECT and public-schema CREATE are denied.
 - Enabled transaction pooling on existing endpoint `ep-sweet-tooth-baaomfd7`; compute size, suspension and paid-plan settings were unchanged.
-- Final counts: zero memberships, recipes and Auth users. No synthetic user/membership/recipe was inserted.
+- Initial setup counts before login/enrollment: zero memberships, recipes and Auth users. The later real account and labeled test recipe are recorded below.
 
 ## Secure local handoff completed
 
@@ -30,7 +32,7 @@ The script pins the exact endpoint/database/role, verifies TLS, refuses piped in
 
 The user completed the local helper on October 21. Follow-up checks confirm both restricted roles have LOGIN, the active local files point to the exact approved production endpoints/roles with verify-full TLS and mode 0600, and Auth/cookie configuration is present. A real local node-postgres connection as `apat_prod_app` succeeds and reads the empty app tables. Transactional membership UPDATE and managed Auth reads are actually rejected with SQLSTATE 42501; recipe DELETE and public DDL privileges remain false. No test row was written. The earlier mock pseudo-terminal checks also passed, but are separate from this real database evidence.
 
-## Remaining real integration checks
+## Historical checkpoint before sign-in (superseded below)
 
 The built app is running locally at `http://127.0.0.1:3026`. Open `http://127.0.0.1:3026`, and sign in with the approved Google account. Verify the provider's stable subject and verified email before enrolling that exact subject; do not auto-enroll arbitrary Google users. Then exercise real save/reload/export, revoked membership/session behavior and owner denial. Signed-out local HTTP requests to account/list/write return 401; spoofed owner headers also return 401, foreign-origin writes return 403, and private responses are no-store. The home page returns 200. Browser control timed out while opening the local page; the user must open the link and complete sign-in. This is a tooling limit, not evidence of an OAuth failure. No real OAuth completion is claimed.
 
