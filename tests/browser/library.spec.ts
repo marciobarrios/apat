@@ -257,3 +257,24 @@ test("mocked auth: sign-out failure is retryable, success clears private state",
   await expect(page.getByText("Sign in with Google to open", { exact: false })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Lemon pasta" })).toHaveCount(0);
 });
+
+test("OAuth verifier on the public home is forwarded to the protected callback", async ({
+  request,
+}) => {
+  const response = await request.get(
+    "/?neon_auth_session_verifier=authored-expired-fixture&returnTo=https%3A%2F%2Fexample.invalid",
+    { maxRedirects: 0 },
+  );
+  expect(response.status()).toBe(307);
+  const target = new URL(response.headers().location, response.url());
+  expect(target.origin).toBe("http://127.0.0.1:3026");
+  expect(target.pathname).toBe("/library");
+  expect(target.searchParams.get("neon_auth_session_verifier")).toBe("authored-expired-fixture");
+  // No challenge cookie is supplied: this checks routing, not OAuth success.
+  const denied = await request.get(target.href, { maxRedirects: 0 });
+  expect(denied.status()).toBe(307);
+  const login = new URL(denied.headers().location, denied.url());
+  expect(login.origin).toBe(target.origin);
+  expect(login.pathname).toBe("/");
+  expect(login.searchParams.has("neon_auth_session_verifier")).toBe(false);
+});
