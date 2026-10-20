@@ -2,11 +2,13 @@
 
 **Required:** Drizzle schema/query/migration layer, Next.js, React, TypeScript, Tailwind, shadcn with Base UI, pnpm, Oxlint/Oxfmt with reviewed anti-slop rules. Personal private libraries, public product direction with controlled family/friends beta, Google login, Instagram-first imports, iOS Shortcut allowed.
 
-**Proposed, not provisioned:** Neon Postgres/Managed Better Auth/Object Storage; Vercel hosting; AI SDK; tentative Vercel AI Gateway; Gemini extraction; one durable worker. Research found an existing Neon apat project, but no secrets were fetched or settings changed.
+**Implemented and verified locally:** existing Neon Postgres + Managed Better Auth, Google login, explicit invited membership, restricted server-side Drizzle connection and one-account manual recipe save/reload/edit/export. Existing Vercel hosting serves the earlier UI; the connected feature branch is not deployed. See [current implementation plan](PLAN.md) and [live setup evidence](NEON-PRODUCTION-STATUS.md).
+
+**Still proposed/unimplemented:** private Object Storage, Gemini extraction through AI SDK with an exact model/route to validate, tentative Vercel AI Gateway, and one durable import worker/orchestrator. Next work is Instagram acquisition and Gemini extraction; no paid inference or worker/storage provisioning is authorized merely by listing these choices.
 
 **Alternatives preserved:** Supabase for mature integrated permissions/auth/storage; R2 for lifecycle deletion and media egress economics; OpenRouter for model/provider routing coverage; direct Google for unsupported gateway media capabilities; Trigger.dev/container worker if browser/FFmpeg acquisition makes a simple serverless step unsuitable. Do not install all alternatives at once. Jev is optional post-extraction categorization, not numerical inference or allergen certification.
 
-**Phase-0 choices:** English-only provisional fixture UI, system fonts, no external media, no production API, no paid provider SDK wired, no secrets, PGlite for local PostgreSQL verification. Their purpose is to test boundaries while external decisions remain open. The shadcn Base Nova Button source was retrieved from its official registry; Base UI composition is retained. Only selected anti-slop evidence/safety rules are enabled; see vendored provenance.
+**Historical phase-0 choices:** English-only provisional fixture UI, system fonts, no external media, no production API, no paid provider SDK wired, no secrets, PGlite for local PostgreSQL verification. Their purpose is to test boundaries while external decisions remain open. The shadcn Base Nova Button source was retrieved from its official registry; Base UI composition is retained. Only selected anti-slop evidence/safety rules are enabled; see vendored provenance.
 
 ## Current source references checked 2026-10-20
 
