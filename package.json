@@ -18,7 +18,8 @@
     "experiment:instagram:browser": "tsx scripts/instagram-browser-experiment.ts",
     "experiment:instagram:media": "tsx scripts/inspect-observed-media.ts",
     "db:generate": "drizzle-kit generate",
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
+    "setup:neon:production": "node scripts/setup-neon-production.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

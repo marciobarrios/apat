@@ -1,6 +1,6 @@
 # Private recipe foundation and setup gates
 
-This milestone implements the account and recipe foundation from [PLAN.md, Phase 1](PLAN.md#phase-1-secure-vertical-slice-pending). It is ready for an approved development integration test. Real development database setup has now started after explicit approval; the application connection is still gated by Auth cleanup and secure credential activation. See [current setup status](NEON-DEV-STATUS.md). AI extraction, Instagram ingestion, storage, paid processing, merging and deployment are outside this milestone.
+This milestone implements the account and recipe foundation from [PLAN.md, Phase 1](PLAN.md#phase-1-secure-vertical-slice-pending). The user has now approved reuse of the existing production database branch for local integration testing. Its app migrations and restricted roles are installed; secure local credential activation and real Google sign-in remain pending. See [production setup status](NEON-PRODUCTION-STATUS.md) and the preserved [development setup history](NEON-DEV-STATUS.md). AI extraction, Instagram ingestion, storage, paid processing, merging and deployment are outside this milestone.
 
 ## Reconciled state before approved setup — October 20, 2026
 
