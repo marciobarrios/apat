@@ -6,10 +6,10 @@
 - Oxlint with selected vendored anti-slop rules: passed without warnings.
 - Oxfmt check: passed.
 - TypeScript 7: passed.
-- Vitest: **57 passed**, 3 files. Covers URL/redirect/DNS-range rejection, denied responses, bounded parser, caption/media evidence separation, invalid schema/ranges, unknown quantities, scaling, state transitions, and local Postgres tests for migration, atomic import/outbox creation, repeat idempotency, budget contention, concurrency, invitation denial, ownership and optimistic edits.
+- Vitest: **77 passed**, 4 files. Covers URL/redirect/DNS-range rejection, denied responses, bounded parser, caption/media evidence separation, English/Spanish/Catalan text preservation and login metadata, invalid schema/ranges, unknown quantities, scaling, state transitions, and local Postgres tests for migration, atomic import/outbox creation, repeat idempotency, budget contention, concurrency, invitation denial, ownership and optimistic edits.
 - Production Next.js build: passed; two static routes (`/`, `/_not-found`). Initial sandbox attempt failed because Turbopack needed a local worker port; rerun with that permission succeeded, without a code workaround.
 - Playwright: **12 passed**, 6 scenarios each at desktop and iPhone-sized Chromium viewport. Review/save/reload/export, invalid edits/cancel, repeated capture with no external calls, scaling/cooking controls, keyboard/overflow and absent live import endpoint. Screenshots visually reviewed at both sizes. This is not physical iOS or Safari verification.
-- Live acquisition: public HTML caption verified; fresh logged-out browser exposed public CDN tracks; local full media decoding succeeded. See ACQUISITION.md. No inference was performed.
+- Live acquisition: all six supplied Reels acquired locally. For the five additional examples, direct and rendered captions matched; 15 downloaded tracks and five muxed audiovisual files decoded fully. Representative frames were visually reviewed, then temporary media removed. See ACQUISITION.md for per-Reel evidence and limits. No inference was performed.
 
 ## Evidence boundaries
 

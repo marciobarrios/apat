@@ -5,14 +5,14 @@ Authority: `recipe-app-research.pdf`, Library `libfile_5d7fee3223d481918ee141574
 ## Current delivery
 
 - Private repo and isolated feature worktree, pinned Next 16 / React 19 / TypeScript 7 / Tailwind 4 / Base UI shadcn / pnpm / Oxlint-Oxfmt.
-- Safe public Instagram caption adapter and repeatable local browser/media experiments; sample success described precisely in ACQUISITION.md.
+- Safe public Instagram caption adapter and repeatable local browser/media experiments; six successful local samples spanning English, Spanish and Catalan described precisely in ACQUISITION.md. Automatic semantic normalization remains unimplemented.
 - Runtime-validated recipe/evidence contract, unknown quantities, deterministic ingredient scaling and state-transition rules.
 - Preliminary Drizzle schema plus local PostgreSQL/PGlite migration/admission/ownership experiment. This is not a production persistence layer. It reserves user/global budget and writes dispatch intent transactionally, tests duplicate/race handling, and preserves original evidence on edits. Numerical limits in the experiment are test policy only, not approved beta limits.
 - Local fixture review/cooking/export UI. No login, import worker, model call, external storage or production API is connected. Browser persistence is for demonstration only, not a secure account library.
 
 ## Next gate: acquisition
 
-1. Obtain 30–50 permitted public examples, including caption-poor, overlay-heavy, silent and narrated clips. Build human evidence answers.
+1. Expand from the six supplied examples to 30–50 permitted public examples, including caption-poor, overlay-heavy, silent and narrated clips across English, Spanish and Catalan. Build human evidence answers, retaining original language/provenance and unknown quantities.
 2. Agree intended worker and authorized preview experiment. Test direct HTML and rendered public media separately. Do not assume the browser/FFmpeg path fits the default Vercel function.
 3. Approve numerical inference budget and a current model route. Compare real extraction accuracy/cost before adding a paid provider. Keep paid calls off until then.
 

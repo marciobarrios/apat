@@ -97,7 +97,12 @@ export function parseInstagramHtml(
         /* Invalid external metadata is ignored; no script is executed. */
       }
     });
-  if (!caption || caption.length > 20000 || /^(login|log in|sign up|instagram)$/i.test(caption)) {
+  caption = caption.trim();
+  const genericPageCaption =
+    /^(login|log in|sign up|instagram|inicia sesión|iniciar sesión|inicia sessió|iniciar sessió|registrarse|registra['’]t)$/iu.test(
+      caption,
+    );
+  if (!caption || caption.length > 20000 || genericPageCaption) {
     if (
       $("input[name='password']").length ||
       /accounts\/login/.test($("form").attr("action") ?? "")
