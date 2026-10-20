@@ -15,7 +15,7 @@ Open http://127.0.0.1:3026. Review/edit the authored sample, change servings, ex
 
 ## What we learned
 
-The supplied Instagram Reel yielded caption text from direct public HTML. A clean logged-out Chromium session then revealed separate public CDN video/audio; local bounded downloads and FFmpeg produced a decodable audiovisual MP4. **One sample on a Mac is not proof of production reliability.** See [the acquisition evidence](docs/ACQUISITION.md).
+All six supplied Instagram Reels yielded caption text from direct public HTML. Clean logged-out Chromium sessions then revealed separate public CDN video/audio; local bounded downloads and FFmpeg produced decodable audiovisual MP4s. The examples span English, Spanish and Catalan. **Six samples on a Mac do not establish production reliability or model extraction accuracy.** See [the acquisition evidence](docs/ACQUISITION.md).
 
 ## Code and verification
 

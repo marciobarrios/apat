@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:browser": "playwright test",
     "experiment:instagram": "tsx scripts/instagram-experiment.ts",
+    "experiment:instagram:browser": "tsx scripts/instagram-browser-experiment.ts",
+    "experiment:instagram:media": "tsx scripts/inspect-observed-media.ts",
     "db:generate": "drizzle-kit generate",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build"
   },

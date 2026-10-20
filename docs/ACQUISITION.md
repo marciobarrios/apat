@@ -1,6 +1,6 @@
 # Instagram acquisition experiment — 2026-10-20 UTC
 
-Sample: the user-supplied public Reel `DWJJrpcCLLP` (ChefBosquet). One unique sample, not a reliability benchmark. All observations ran on Marcio's Mac. Vercel/cloud acquisition and model extraction have **not** been tested.
+Samples: six user-supplied public Reels, including original `DWJJrpcCLLP` (ChefBosquet) and the five below. This is a small convenience sample, not a reliability benchmark. All observations ran on Marcio's Mac. Vercel/cloud acquisition and model extraction have **not** been tested.
 
 ## Results
 
@@ -19,18 +19,48 @@ Sample: the user-supplied public Reel `DWJJrpcCLLP` (ChefBosquet). One unique sa
 
 No paid vendor, model inference or external storage was used. Raw captions, signed CDN references, media and screenshots are excluded from Git. Temporary downloaded media was removed after inspection. The report intentionally omits signed URLs.
 
+## Five additional Reels: English, Spanish and Catalan
+
+Observed 2026-10-20, 08:03–08:06 UTC. Each source used direct public HTML followed by a fresh logged-out Chromium context. All returned HTTP 200, one video element and no password field. Direct and rendered captions matched exactly; there were no supported video references in any initial HTML response.
+
+| Reel          | Caption language | Caption length¹ | Video duration | Video + audio        |
+| ------------- | ---------------- | --------------: | -------------: | -------------------- |
+| `Dd4nCZIuzME` | Spanish          |             425 |        42.13 s | Acquired and decoded |
+| `DTGaTvADNRm` | Spanish          |             874 |        25.80 s | Acquired and decoded |
+| `Dc8_GajC1hL` | English          |           1,736 |        92.73 s | Acquired and decoded |
+| `DdmUMmAoClp` | Spanish          |           1,194 |        61.40 s | Acquired and decoded |
+| `DeMjB0GIFcV` | Catalan          |             734 |        25.83 s | Acquired and decoded |
+
+¹ JavaScript string length (UTF-16 code units), not Unicode graphemes. Language labels describe the observed corpus; no production language detector is implemented.
+
+Each browser observation received 13 media responses. A maximum of three distinct media paths per Reel was downloaded: H.264 video in 720×1280 and 360×640, plus a separate AAC audio track. **Every one of these 15 files decoded completely** with FFmpeg. The 720p video and audio were also muxed into five MP4s; all five combined files decoded successfully, ranging from 4.44 to 13.87 MB. Representative frames from each Reel were visually inspected. Track timing was consistent; this does not verify narration accuracy, audio synchronization perceptually, or ingredient completeness.
+
+This supports the feasibility of direct acquisition on this Mac across the supplied examples, without paid scrapers or login. It does not establish a general success rate, cloud reliability or AI recipe accuracy. The browser remains necessary in every tested case. The inspection's three-asset cap can miss a needed track on a different page, so a production worker must identify the active Reel's tracks rather than assume response order. Representative-frame inspection is a research check, not an automated source/track identity guarantee.
+
+### Multilingual contract
+
+- Support English (`en`), Spanish (`es`) and Catalan (`ca`) sources. Preserve the original caption, its line breaks, accent marks, Catalan `l·l`/apostrophes and evidence excerpts.
+- Preserve source-language recipe text by default. UI locale and optional translation are separate choices; do not silently translate evidence.
+- Normalization must understand decimal commas and points, Unicode fractions, local measures and unquantified ingredients. The structured contract can represent these, but **the automatic normalizer/model is not connected yet**.
+- Keep absent quantities, serving counts and times unknown. “To taste”, “al gusto” and “al gust” must not become invented amounts.
+- Evaluate narrated audio, visual overlays, caption-only cases, mixed languages and conflicting evidence before claiming model support. Add real expected answers and compare against the approved model route.
+
+`tests/multilingual.test.ts` adds 20 authored regression cases for lossless extraction/schema round-tripping/scaling, shared-link tracking removal, whitespace metadata and multilingual login pages. These tests use human-defined structured values; they do not simulate a successful LLM response or prove automatic semantic extraction.
+
 ## Architectural consequence
 
-Direct ingestion is possible for this particular sample, but the initial HTML alone did not supply the video. The successful route required rendering JavaScript and combining separate audio/video. Do not promise a cheap generic fetch in a Vercel request handler. Next proof: representative public corpus and the intended deployed runtime, with an explicitly approved test environment/budget. Options: caption-first fast path; browser-capable worker for approved accessible cases; user-authorized upload; optional vendor only if approved. Compare one worker (e.g. Trigger.dev/container) with Vercel Workflow before adding infrastructure. No provider commitment is made here.
+Direct ingestion is possible for these samples, but the initial HTML alone did not supply the video. The successful route required rendering JavaScript and combining separate audio/video. Do not promise a cheap generic fetch in a Vercel request handler. Next proof: representative public corpus and the intended deployed runtime, with an explicitly approved test environment/budget. Options: caption-first fast path; browser-capable worker for approved accessible cases; user-authorized upload; optional vendor only if approved. Compare one worker (e.g. Trigger.dev/container) with Vercel Workflow before adding infrastructure. No provider commitment is made here.
 
 ## Reproduce (local, deliberate experiments only)
 
 - `pnpm experiment:instagram 'https://www.instagram.com/reel/DWJJrpcCLLP/'`
-- `node scripts/instagram-browser-experiment.mjs` (requires installed Playwright Chromium; fresh anonymous context)
-- `pnpm exec tsx scripts/inspect-observed-media.ts` (requires fresh observed references and local `ffprobe`)
+- `pnpm experiment:instagram:browser 'https://www.instagram.com/reel/SHORTCODE/'` (requires installed Playwright Chromium; fresh anonymous context)
+- `pnpm experiment:instagram:media 'https://www.instagram.com/reel/SHORTCODE/'` (requires fresh observed references and local `ffprobe`/`ffmpeg`; bounds downloads, probes and fully decodes individual tracks)
+
+Outputs now live under ignored `research/reels/SHORTCODE/`; captions and signed CDN references are written with restrictive file permissions. Temporary tracks and frames are research-only and should be removed after inspection. The five-file mux check was a separate local FFmpeg experiment, not an implemented production ingestion step.
 
 The media inspection script is a local research utility, not an upload/download API and not ready for arbitrary user traffic. References expire. Lack of a caption/ref, a login wall, 403 or 429 ends the relevant attempt; no bypass or paid fallback.
 
 ## Still unverified
 
-30–50 representative Reels; account/region variation; deleted/private fixtures in the actual network path; CDN expiry recovery; full-route deadlines on media-inspection DNS lookup; corpus hit rate; semantic audio/video extraction; Gemini/Gateway parity; inference cost/accuracy; Vercel runtime acquisition; upload/storage authorization; physical iOS Shortcut flow. Do not treat this single successful Reel as the go/no-go gate passing for the public product.
+30–50 representative Reels; account/region variation; deleted/private fixtures in the actual network path; CDN expiry recovery; corpus hit rate; semantic audio/video extraction; Gemini/Gateway parity; inference cost/accuracy; Vercel runtime acquisition; upload/storage authorization; physical iOS Shortcut flow. Media-inspection DNS is now bounded to five seconds, downloads to 15 seconds per file and decode to 60 seconds per file; a production worker still needs an overall job deadline. Do not treat these six successful examples as the go/no-go gate passing for the public product.
