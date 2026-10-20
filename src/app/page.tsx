@@ -1,4 +1,4 @@
-import { Notebook } from "@/components/notebook";
+import { Library } from "@/components/library";
 export default function Page() {
-  return <Notebook />;
+  return <Library />;
 }

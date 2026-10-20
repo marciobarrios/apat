@@ -334,6 +334,9 @@ h3 {
   font-size: 22px;
 }
 .editor {
+  border: 0;
+  padding: 0;
+  min-width: 0;
   max-width: 700px;
   margin-top: 24px;
 }
@@ -372,6 +375,26 @@ footer {
   margin-top: 26px;
   font-size: 12px;
   color: #657267;
+}
+.library-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+.library-list button {
+  width: 100%;
+  height: auto;
+  white-space: normal;
+  text-align: left;
+  justify-content: flex-start;
+}
+.library-empty {
+  margin-top: 24px;
+}
+.account-area > .actions {
+  margin-bottom: 24px;
 }
 @media (max-width: 900px) {
   .shell {

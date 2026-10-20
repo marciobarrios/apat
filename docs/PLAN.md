@@ -18,7 +18,9 @@ Authority: `recipe-app-research.pdf`, Library `libfile_5d7fee3223d481918ee141574
 
 ## Phase 1: secure vertical slice (pending)
 
-- Read-only connection found existing Neon `apat` in Frankfurt (`sparkling-base-11618556`); no duplicate was created. Vercel search returned no project. Do not infer service activation, plan, or spare quota from these reads.
+Private account/recipe foundation is implemented on `feat/neon-private-library`: Google Auth SDK wiring, verified server identity, explicit subject-based memberships, owner-scoped Drizzle services/APIs, idempotent saves, optimistic edits, private library UI and local tests. See [NEON-SETUP.md](NEON-SETUP.md) for reconciled resources, migration review and exact action-time approval gates. It is not externally connected or deployed; the complete import vertical slice and its release gates remain pending.
+
+- October 20 read-only reconciliation found existing Neon `apat` in Frankfurt (`sparkling-base-11618556`) with Managed Better Auth/shared development Google OAuth on its sole production branch. Existing Vercel `apat` has a READY production deployment and no environment variables. No duplicate was created. Service configuration is not proof of a working app integration or spare quota.
 - Approval needed before creating/pulling persistent credentials, creating a dev branch, configuring Neon Auth/Google OAuth/private storage, applying external migrations, or deploying a Vercel preview. Existing account resources must be reconciled.
 - Choose primary UI language and recipe translation policy; do not infer bilingual requirements from unrelated projects.
 - Confirm beta invitations, region/retention, monthly/per-user spend, duration/size/concurrency and source-content policy. Current proposed stack remains Neon Auth/Postgres/Object Storage, Vercel hosting + AI SDK + one orchestration layer. R2, Supabase and OpenRouter alternatives remain in DECISIONS.md.
