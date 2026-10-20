@@ -8,7 +8,7 @@ This milestone implements the account and recipe foundation from [PLAN.md, Phase
 - Neon: reused metadata for project `apat`, `sparkling-base-11618556`, AWS Frankfurt (`aws-eu-central-1`). Only branch found: `production`, `br-misty-paper-bacbzyhs`.
 - Managed Better Auth is already enabled on that branch. The redacted configuration reports Google shared development OAuth, email/password disabled, no trusted application origins, localhost permitted. This is configuration evidence, not a successful login test.
 - Vercel: existing project `apat`, `prj_SuUclQl0K73R1ur4GiSGbKkKNpsF`, has a READY production deployment. Metadata lists `apat-self.vercel.app`. Its environment-variable list is empty. No values were decrypted or pulled.
-- No SQL was run on production. No credentials were fetched/generated, no Neon branches/roles/users were created, no settings or access were changed, and no migrations or deployments were performed.
+- This section records the pre-setup baseline. Subsequent approved development work is recorded in NEON-DEV-STATUS.md; approved production migrations, role grants and pooling are recorded in NEON-PRODUCTION-STATUS.md. Production reconciliation used read-only catalog/count SQL before those approved changes.
 
 ## Implemented boundary
 
@@ -18,7 +18,7 @@ The app uses Drizzle with node-postgres and Vercel pool lifecycle support. Privi
 
 The home page is an account library. Invited users can manually add recipes, preserve their written evidence and unknown amounts, edit, reload and export. `/sample` retains the authored browser-only demonstration; its localStorage content is never silently migrated to an account. Cloud recipes are not written to localStorage. The UI retains failed drafts for retry and clears displayed private data when an account change is detected.
 
-`drizzle/0001_sleepy_justice.sql` adds creation key/hash/timestamp, owner indexes and a positive-version constraint. It is additive; no auth-managed tables are altered. Both migrations run only in disposable PGlite tests. The earlier import/budget/admission experiment stays disconnected from HTTP.
+`drizzle/0001_sleepy_justice.sql` adds creation key/hash/timestamp, owner indexes and a positive-version constraint. It is additive; no auth-managed tables are altered. Both migrations were validated in disposable PGlite tests; their subsequently approved remote execution is recorded in the setup status documents. The earlier import/budget/admission experiment stays disconnected from HTTP.
 
 ## Approval A: isolated Neon development setup
 
@@ -38,11 +38,11 @@ Creating a branch and generating/persisting credentials are separate action-time
 After approval and secure config, migrations can be run deliberately with the direct URL loaded only into the migration process:
 
 ```sh
-node --env-file=.env.local node_modules/drizzle-kit/bin.cjs migrate
+node --env-file=.env.migration.local node_modules/drizzle-kit/bin.cjs migrate
 pnpm dev
 ```
 
-`drizzle.config.ts` refuses a pooled or non-Neon migration URL. It does not load `.env.local` automatically. Review the actual destination securely before executing the command; never print the URL. No migration command has been executed against Neon.
+`drizzle.config.ts` refuses a pooled or non-Neon migration URL. It does not load environment files automatically. Review the actual destination securely before executing the command; never print the URL. No migration command has been executed against Neon.
 
 ## Approval B: preview setup and deployment
 
@@ -64,7 +64,7 @@ Approval B would then allow the same tests on the protected preview, including b
 - Vitest: 107 tests, including ten new private-library API/database tests executing the shared handlers/services against actual embedded PostgreSQL/PGlite. Identity is explicitly supplied in tests. Tests cover anonymous/unverified/uninvited/revoked access, two-user isolation, save/reload/export, immutable original evidence, idempotency, concurrent creation/update, pagination, CSRF, malformed/oversized bodies and sanitized failures. A restricted PostgreSQL role can save/edit recipes while membership UPDATE, import reads and recipe DELETE remain denied.
 - All 24 vendored lint-rule suites pass.
 - Browser: 30 checks pass (15 scenarios × desktop/mobile), covering the authored sample plus mocked-account flows at desktop and iPhone-sized Chromium viewports. These are HTTP interaction tests, not OAuth success or remote persistence tests. Screenshots live in ignored `artifacts/` and contain authored fixture data only.
-- Production has no test data written and remains unchanged.
+- Production has no test recipe/account data written. Its approved additive schema/grant/pooler changes are recorded in NEON-PRODUCTION-STATUS.md.
 
 The installed Neon Auth SDK is `0.6.0-beta`; its transitive optional UI dependency reports peer mismatches for newer Better Auth API-key/better-call packages and a TypeScript-5-only logger. This app imports the Auth SDK API entry points, not that UI. Runtime auth behavior still requires the real test above; do not force dependency overrides without checking provider compatibility. `core-js`'s optional install script is disabled; esbuild remains the sole allowed dependency build script.
 
