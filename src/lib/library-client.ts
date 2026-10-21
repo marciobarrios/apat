@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ACCOUNT_SCOPE_HEADER } from "./library-contract";
 
 const messages: Record<string, string> = {
   account_changed: "Your signed-in account changed. Reopen the notebook to continue.",
@@ -23,14 +24,22 @@ export class LibraryError extends Error {
     );
   }
 }
-export async function libraryRequest<T>(path: string, schema: z.ZodType<T>, init?: RequestInit) {
+export async function libraryRequest<T>(
+  path: string,
+  schema: z.ZodType<T>,
+  init?: RequestInit,
+  expectedAccount?: string,
+) {
+  const headers = new Headers(init?.headers);
+  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  if (expectedAccount) headers.set(ACCOUNT_SCOPE_HEADER, expectedAccount);
   let response: Response;
   try {
     response = await fetch(path, {
       ...init,
       credentials: "same-origin",
       cache: "no-store",
-      headers: { "Content-Type": "application/json", ...init?.headers },
+      headers,
     });
   } catch {
     throw new LibraryError("network_error");

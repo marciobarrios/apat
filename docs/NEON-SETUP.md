@@ -12,6 +12,8 @@ This milestone implements the account and recipe foundation from [PLAN.md, Phase
 
 ## Implemented boundary
 
+The initial library response bundles account and recipes from one verified server identity. Subsequent UI reads/writes/export include an expected-account assertion; a mismatch rejects the request before any recipe operation. This assertion can only reject stale context, never choose an owner. New snapshots and detected account changes invalidate in-flight operations and clear stale creation keys.
+
 `@neondatabase/auth` provides the same-origin auth proxy and Google client. The SDK middleware handles OAuth verifier exchange on `/library`. Every private API independently checks the server session with cookie-cache bypass, requires a verified identity, and derives the owner from its stable Neon subject. `memberships.id` is that subject; `active = 1` is a separate, server-controlled entitlement. Login does not grant membership, and no HTTP endpoint can enroll a user.
 
 The app uses Drizzle with node-postgres and Vercel pool lifecycle support. Privileged clients are server-only. Recipe list/get/create/update/export queries enforce owner and active membership. A per-owner creation key and content hash make retries idempotent; conditional version updates reject stale edits. Original evidence stays immutable when the edited recipe changes. List pagination is bounded to 20 recipes. Cookie mutations require the configured exact origin; bodies and response data are runtime validated, JSON writes are bounded to 256 KiB, and private responses use `private, no-store`. Error bodies omit database/provider diagnostics.

@@ -25,3 +25,7 @@ export const RecipeList = z.object({
   nextCursor: z.string().nullable(),
 });
 export const Account = z.object({ id: z.string(), name: z.string() });
+
+// The account and initial list are resolved from one server-authenticated identity.
+export const LibrarySnapshot = RecipeList.extend({ account: Account });
+export const ACCOUNT_SCOPE_HEADER = "X-Apat-Expected-Account";
