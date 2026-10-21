@@ -3,7 +3,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Notebook } from "./notebook";
-import { Account, RecipeList, SavedRecipe, type SavedRecipeData } from "@/lib/library-contract";
+import {
+  Account,
+  LibrarySnapshot,
+  RecipeList,
+  SavedRecipe,
+  type SavedRecipeData,
+} from "@/lib/library-contract";
 import { libraryRequest, LibraryError } from "@/lib/library-client";
 import { authClient } from "@/lib/auth-client";
 import { Recipe, type RecipeData } from "@/lib/recipe";
@@ -128,9 +134,7 @@ function NewRecipe({
 }
 
 async function loadLibrary(signal?: AbortSignal) {
-  const user = await libraryRequest("/api/account", Account, { signal });
-  const list = await libraryRequest("/api/recipes", RecipeList, { signal });
-  return { user, list };
+  return libraryRequest("/api/recipes", LibrarySnapshot, { signal });
 }
 
 export function Library() {
@@ -170,18 +174,24 @@ export function Library() {
         setRecords([]);
         setSelected(null);
         setAccount(null);
+        setCursor(null);
+        creation.current = null;
         setAdding(false);
       }
     }
   }, []);
   const accept = useCallback(
     (data: {
-      user: { id: string; name: string };
-      list: { recipes: SavedRecipeData[]; nextCursor: string | null };
+      account: { id: string; name: string };
+      recipes: SavedRecipeData[];
+      nextCursor: string | null;
     }) => {
-      setAccount(data.user);
-      setRecords(data.list.recipes);
-      setCursor(data.list.nextCursor);
+      // A new snapshot invalidates operations started under the previous view.
+      generation.current++;
+      creation.current = null;
+      setAccount(data.account);
+      setRecords(data.recipes);
+      setCursor(data.nextCursor);
       setSelected(null);
       setAdding(false);
       setNotice("");
@@ -217,7 +227,7 @@ export function Library() {
     // Recheck entitlement after returning to the app, including browser back/forward cache.
     const check = () => {
       if (document.visibilityState === "visible" && account) {
-        void libraryRequest("/api/account", Account)
+        void libraryRequest("/api/account", Account, undefined, account.id)
           .then((current) => {
             if (current.id !== account.id) report(new LibraryError("account_changed"));
           })
@@ -387,10 +397,15 @@ export function Library() {
                     if (creation.current?.body !== body)
                       creation.current = { key: crypto.randomUUID(), body };
                     const saved = await currentRequest(
-                      libraryRequest("/api/recipes", SavedRecipe, {
-                        method: "POST",
-                        body: JSON.stringify({ key: creation.current.key, recipe }),
-                      }),
+                      libraryRequest(
+                        "/api/recipes",
+                        SavedRecipe,
+                        {
+                          method: "POST",
+                          body: JSON.stringify({ key: creation.current.key, recipe }),
+                        },
+                        account.id,
+                      ),
                     );
                     setRecords((previous) => [
                       saved,
@@ -425,10 +440,15 @@ export function Library() {
                     setBusy(true);
                     try {
                       const saved = await currentRequest(
-                        libraryRequest(`/api/recipes/${selected.id}`, SavedRecipe, {
-                          method: "PATCH",
-                          body: JSON.stringify({ version: selected.version, recipe }),
-                        }),
+                        libraryRequest(
+                          `/api/recipes/${selected.id}`,
+                          SavedRecipe,
+                          {
+                            method: "PATCH",
+                            body: JSON.stringify({ version: selected.version, recipe }),
+                          },
+                          account.id,
+                        ),
                       );
                       setSelected(saved);
                       setRecords((previous) =>
@@ -451,18 +471,27 @@ export function Library() {
                     }
                   },
                   export: async () => {
-                    const saved = await libraryRequest(
-                      `/api/recipes/${selected.id}/export`,
-                      SavedRecipe,
-                    );
-                    const url = URL.createObjectURL(
-                      new Blob([JSON.stringify(saved, null, 2)], { type: "application/json" }),
-                    );
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.download = "apat-recipe.json";
-                    link.click();
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    try {
+                      const saved = await currentRequest(
+                        libraryRequest(
+                          `/api/recipes/${selected.id}/export`,
+                          SavedRecipe,
+                          undefined,
+                          account.id,
+                        ),
+                      );
+                      const url = URL.createObjectURL(
+                        new Blob([JSON.stringify(saved, null, 2)], { type: "application/json" }),
+                      );
+                      const link = document.createElement("a");
+                      link.href = url;
+                      link.download = "apat-recipe.json";
+                      link.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    } catch (error) {
+                      report(error);
+                      throw error;
+                    }
                   },
                 }}
               />
@@ -486,7 +515,12 @@ export function Library() {
                           try {
                             setSelected(
                               await currentRequest(
-                                libraryRequest(`/api/recipes/${recipe.id}`, SavedRecipe),
+                                libraryRequest(
+                                  `/api/recipes/${recipe.id}`,
+                                  SavedRecipe,
+                                  undefined,
+                                  account.id,
+                                ),
                               ),
                             );
                           } catch (error) {
@@ -510,6 +544,8 @@ export function Library() {
                           libraryRequest(
                             `/api/recipes?cursor=${encodeURIComponent(cursor)}`,
                             RecipeList,
+                            undefined,
+                            account.id,
                           ),
                         );
                         setRecords((previous) => [

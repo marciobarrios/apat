@@ -10,7 +10,12 @@ import { AccessError } from "../src/server/errors";
 import { memberships } from "../src/server/db/schema";
 import { sampleRecipe } from "../src/lib/recipe";
 import { readConfig } from "../src/server/config";
-import { SavedRecipe, RecipeList } from "../src/lib/library-contract";
+import {
+  SavedRecipe,
+  RecipeList,
+  LibrarySnapshot,
+  ACCOUNT_SCOPE_HEADER,
+} from "../src/lib/library-contract";
 
 let client: PGlite;
 let db: ReturnType<typeof drizzle>;
@@ -235,4 +240,51 @@ it("runtime role saves and edits while membership management and import tables r
   );
   await expect(client.query("SELECT * FROM imports")).rejects.toThrow("permission denied");
   await expect(client.query("DELETE FROM recipes")).rejects.toThrow("permission denied");
+});
+
+it("returns account and recipes from one identity resolution when the session changes", async () => {
+  const aliceRecipe = await create(alice);
+  await create(bob);
+  let resolutions = 0;
+  const handler = libraryApi({
+    identity: async () => (++resolutions === 1 ? alice : bob),
+    library: (identity) => createLibrary(db, identity),
+    origin: () => origin,
+  });
+  const response = await handler(request(), "list");
+  expect(response.status).toBe(200);
+  const snapshot = LibrarySnapshot.parse(await response.json());
+  expect(resolutions).toBe(1);
+  expect(snapshot.account).toEqual({ id: "alice", name: "Alice" });
+  expect(snapshot.recipes.map((recipe) => recipe.id)).toEqual([aliceRecipe.id]);
+});
+
+it("rejects stale account context on every operation without reading or writing another account", async () => {
+  const saved = await create(bob);
+  for (const operation of ["account", "list", "get", "export", "update", "create"] as const) {
+    const body =
+      operation === "create"
+        ? { key: randomUUID(), recipe: sampleRecipe }
+        : operation === "update"
+          ? { version: 1, recipe: { ...sampleRecipe, title: "Wrong account" } }
+          : undefined;
+    const response = await api(bob)(
+      request(body, { [ACCOUNT_SCOPE_HEADER]: "alice" }),
+      operation,
+      saved.id,
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: "account_changed" });
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
+  }
+  const snapshot = LibrarySnapshot.parse(await (await api(bob)(request(), "list")).json());
+  expect(snapshot.recipes).toHaveLength(1);
+  expect(snapshot.recipes[0]).toEqual(saved);
+  // Matching a header cannot select someone else's owner: the session still wins.
+  const denied = await api(bob)(
+    request(undefined, { [ACCOUNT_SCOPE_HEADER]: "bob" }),
+    "get",
+    (await create(alice)).id,
+  );
+  expect(denied.status).toBe(404);
 });

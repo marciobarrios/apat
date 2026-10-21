@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { ACCOUNT_SCOPE_HEADER } from "../lib/library-contract";
+import { AccessError } from "./errors";
 import { createLibrary, type Identity } from "./db/library";
 import { assertSameOrigin, errorResponse, privateJson, readJson } from "./http";
 
@@ -8,7 +10,8 @@ type Dependencies = {
   origin: () => string;
 };
 // Tests exercise these exact handlers with PGlite and an explicit identity provider.
-// Production wiring never accepts identity from headers, bodies, or test environment switches.
+// Identity always comes from the verified session. The optional expected-account
+// header can only reject a stale client context; it never selects an owner.
 export function libraryApi(deps: Dependencies) {
   return async (
     request: Request,
@@ -18,7 +21,11 @@ export function libraryApi(deps: Dependencies) {
     try {
       if (operation === "create" || operation === "update")
         assertSameOrigin(request, deps.origin());
-      const service = deps.library(await deps.identity());
+      const identity = await deps.identity();
+      const expectedAccount = request.headers.get(ACCOUNT_SCOPE_HEADER);
+      if (expectedAccount !== null && expectedAccount !== identity.id)
+        throw new AccessError("account_changed", 409);
+      const service = deps.library(identity);
       if (operation === "account") return privateJson(await service.account());
       if (operation === "list") {
         const cursor = z
@@ -26,7 +33,8 @@ export function libraryApi(deps: Dependencies) {
           .max(100)
           .optional()
           .parse(new URL(request.url).searchParams.get("cursor") ?? undefined);
-        return privateJson(await service.list(cursor));
+        const [account, list] = await Promise.all([service.account(), service.list(cursor)]);
+        return privateJson({ ...list, account });
       }
       if (operation === "create")
         return privateJson(await service.create(await readJson(request)), 201);

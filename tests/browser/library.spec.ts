@@ -5,7 +5,9 @@ import {
   SavedRecipe,
   UpdateRecipe,
   type SavedRecipeData,
+  ACCOUNT_SCOPE_HEADER,
 } from "../../src/lib/library-contract";
+import { sampleRecipe } from "../../src/lib/recipe";
 
 // Browser interaction tests deliberately mock HTTP, never Google/Neon verification.
 // The API suite separately executes these contracts against local PostgreSQL/PGlite.
@@ -16,12 +18,17 @@ async function mockLibrary(page: Page) {
   let failNext = false;
   let failAfterCommit = false;
   let conflictNext = false;
-  await page.route("**/api/account", (route) =>
-    route.fulfill({ json: { id: "alice", name: "Alice (test fixture)" } }),
-  );
+  let account = { id: "alice", name: "Alice (test fixture)" };
+  await page.route("**/api/account", (route) => route.fulfill({ json: account }));
   await page.route("**/api/recipes**", async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    const expectedAccount = request.headers()[ACCOUNT_SCOPE_HEADER.toLowerCase()];
+    if (expectedAccount && expectedAccount !== account.id) {
+      await route.fulfill({ status: 409, json: { error: "account_changed" } });
+      return;
+    }
+    if (request.method() !== "GET" || path.split("/")[3]) expect(expectedAccount).toBe(account.id);
     if (request.method() === "POST") {
       createCount++;
       if (failNext) {
@@ -49,7 +56,7 @@ async function mockLibrary(page: Page) {
     }
     const id = path.split("/")[3];
     if (!id) {
-      await route.fulfill({ json: { recipes: [...records.values()], nextCursor: null } });
+      await route.fulfill({ json: { account, recipes: [...records.values()], nextCursor: null } });
       return;
     }
     const record = records.get(id);
@@ -77,6 +84,9 @@ async function mockLibrary(page: Page) {
   });
   return {
     records,
+    switchAccount: () => {
+      account = { id: "bob", name: "Bob (test fixture)" };
+    },
     count: () => createCount,
     fail: () => {
       failNext = true;
@@ -190,7 +200,7 @@ test("mocked account: stale edit keeps the draft and cancel restores saved conte
 test("mocked auth: cancelled Google sign-in can be retried without exposing a library", async ({
   page,
 }) => {
-  await page.route("**/api/account", (route) =>
+  await page.route(/\/api\/(?:account|recipes)$/, (route) =>
     route.fulfill({ status: 401, json: { error: "sign_in_required" } }),
   );
   let attempts = 0;
@@ -208,7 +218,7 @@ test("mocked auth: cancelled Google sign-in can be retried without exposing a li
   await expect(page.getByRole("button", { name: "Add a recipe", exact: true })).toHaveCount(0);
 });
 test("mocked auth: uninvited identity sees denial and can sign out", async ({ page }) => {
-  await page.route("**/api/account", (route) =>
+  await page.route(/\/api\/(?:account|recipes)$/, (route) =>
     route.fulfill({ status: 403, json: { error: "invitation_required" } }),
   );
   await page.goto("/");
@@ -246,7 +256,7 @@ test("mocked auth: sign-out failure is retryable, success clears private state",
       await route.fulfill({ status: 503, json: { message: "Unavailable" } });
       return;
     }
-    await page.route("**/api/account", (next) =>
+    await page.route(/\/api\/(?:account|recipes)$/, (next) =>
       next.fulfill({ status: 401, json: { error: "sign_in_required" } }),
     );
     await route.fulfill({ json: { success: true } });
@@ -277,4 +287,53 @@ test("OAuth verifier on the public home is forwarded to the protected callback",
   expect(login.origin).toBe(target.origin);
   expect(login.pathname).toBe("/");
   expect(login.searchParams.has("neon_auth_session_verifier")).toBe(false);
+});
+
+test("mocked account: initial identity and recipes arrive in one snapshot", async ({ page }) => {
+  let separateAccountRequests = 0;
+  await page.route("**/api/account", (route) => {
+    separateAccountRequests++;
+    return route.fulfill({ json: { id: "alice", name: "Alice" } });
+  });
+  await page.route("**/api/recipes", (route) =>
+    route.fulfill({
+      json: {
+        account: { id: "bob", name: "Bob" },
+        recipes: [
+          {
+            id: randomUUID(),
+            version: 1,
+            original: sampleRecipe,
+            edited: { ...sampleRecipe, title: "Bob's recipe" },
+          },
+        ],
+        nextCursor: null,
+      },
+    }),
+  );
+  await page.goto("/");
+  await expect(page.getByText("Signed in as Bob", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Bob's recipe", exact: true })).toBeVisible();
+  await expect(page.getByText("Signed in as Alice", { exact: true })).toHaveCount(0);
+  expect(separateAccountRequests).toBe(0);
+});
+
+test("mocked account: session switch without a focus event rejects a stale form save", async ({
+  page,
+}) => {
+  const mock = await mockLibrary(page);
+  await page.goto("/");
+  await fillRecipe(page);
+  mock.switchAccount();
+  await page.getByRole("button", { name: "Save recipe", exact: true }).click();
+  await expect(page.getByText("Your signed-in account changed", { exact: false })).toBeVisible();
+  await expect(page.getByLabel("Recipe title")).toHaveCount(0);
+  await expect(page.getByText("Signed in as Alice", { exact: false })).toHaveCount(0);
+  expect(mock.count()).toBe(0);
+  expect(mock.records.size).toBe(0);
+  await page.getByRole("button", { name: "Retry connection", exact: true }).click();
+  await expect(page.getByText("Signed in as Bob (test fixture)", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Your notebook is ready.", exact: true }),
+  ).toBeVisible();
 });
