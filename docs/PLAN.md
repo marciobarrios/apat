@@ -49,7 +49,7 @@ Protected local files already hold the approved app/Auth configuration, with mod
 - [x] Real manual recipe creation, full reload/session restoration, edit cancellation, saved edits and JSON export. One labeled authored connection-test recipe remains in that account; version 2 and unchanged original evidence were checked in Neon.
 - [x] Lint/format/types, 109 unit/PGlite tests, 24 lint-rule suites and 36 desktop/mobile browser checks. Ordinary browser tests use mocks/authored callback fixtures. Separate live browser/Neon evidence establishes the one-account flow above. The older OAuth checkpoint passed both CI runs; recheck the current PR head after the account-scope fix.
 
-**Usable now:** the configured local private notebook accepts manual recipes and stores them in Neon. `/sample` is a browser-only authored demo. Its Instagram form makes no request and its old “Google not connected” banner is stale; neither is evidence of a working importer.
+**Usable now:** the configured local private notebook accepts manual recipes and stores them in Neon. `/sample` is a browser-only authored demo. Its Instagram demo form explicitly makes no request and is not evidence of a working importer. The November 4 notebook redesign removes the stale “Google not connected” banner and preserves the separate private-library and authored-sample flows.
 
 ## Phase 1: secure vertical slice (pending)
 
@@ -80,7 +80,7 @@ The identity/manual-library foundation is complete at the evidence level above. 
 - [ ] Add the approved private media path, signed upload/download authorization, MIME/signature/size/duration verification, bounded worker handoff and explicit expiry/cleanup reconciliation. Store object keys, not signed URLs. Neon Object Storage is proposed, not configured; validate its current deletion/lifecycle/branch-retention behavior before relying on it.
 - [ ] Use one durable orchestration layer. Return an import receipt promptly; persist progress/draft in Postgres so navigation or worker restart does not lose it. Recheck entitlement/cancellation before each paid stage.
 - [ ] Implement conditional lifecycle transitions: `queued → acquiring → extracting → validating → needs_review → ready`, plus `failed`, `cancelled` and a reconcilable `paid_outcome_unknown` hold. Coordinate SDK/gateway/worker retries; do not repeat an ambiguous charge or release its reservation blindly. Cleanup failures have separate retry state and do not erase a saved recipe.
-- [ ] Wire the authenticated Instagram UI to actual admission/status/review/save only after the prerequisite gates pass. Make the current sample placeholder/banner truthful before further user-facing import testing; never show the fixed chickpea sample as an extracted result.
+- [ ] Wire the authenticated Instagram UI to actual admission/status/review/save only after the prerequisite gates pass. The sample now labels its nonfunctional import form explicitly; never show the fixed chickpea sample as an extracted result.
 - [ ] Preserve imported evidence/draft separately from edits; a re-import proposes a new version. Draft editing makes no model call. Optional categorization failure cannot block saving a recipe.
 
 **Exit user story:** an invited user signs in, submits a Reel, leaves the page, returns to real progress, reviews an extracted draft and saves it privately. Duplicate shares, dispatch failure, worker restart, cancellation, timeout/unknown paid outcome and cleanup failure have tested recovery paths.

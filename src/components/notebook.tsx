@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { BookOpen, Download, Leaf, Pencil, Plus, Utensils } from "lucide-react";
+import { Download, Pencil, Utensils, Clock3, Users, Link2 } from "lucide-react";
+import { KitchenSketch, NotebookFooter, NotebookNav } from "./notebook-chrome";
 import { Button } from "@/components/ui/button";
 import { Recipe, sampleRecipe, scaleQuantity, type RecipeData } from "@/lib/recipe";
 const storageKey = "apat:sample-notebook:v1";
@@ -46,8 +47,10 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
   const saving = useRef(false);
   const Main = cloud ? "div" : "main";
   const [notice, setNotice] = useState("");
+  const [captureNotice, setCaptureNotice] = useState("");
   const [link, setLink] = useState("");
   async function save() {
+    setCaptureNotice("");
     if (saving.current) return;
     const parsed = Recipe.safeParse(draft);
     if (!parsed.success) {
@@ -83,6 +86,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
     setEditing(false);
   }
   async function exportRecipe() {
+    setCaptureNotice("");
     if (cloud) {
       try {
         await cloud.export();
@@ -102,76 +106,18 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
   }
   return (
     <div className={cloud ? "recipe-detail" : "shell"}>
-      {!cloud && (
-        <aside className="sidebar">
-          <a href="#main" className="wordmark">
-            apat<span>Recipes worth keeping.</span>
-          </a>
-          <nav aria-label="Main">
-            <a href="#recipe">
-              <BookOpen size={19} />
-              Your notebook
-            </a>
-            <a href="#capture">
-              <Plus size={19} />
-              Save a recipe
-            </a>
-          </nav>
-          <p className="sidebar-note">
-            A little less scrolling.
-            <br />A little more cooking.
-          </p>
-          <span className="local-tag">Local prototype</span>
-        </aside>
-      )}
+      {!cloud && <NotebookNav sample />}
       <Main id={cloud ? undefined : "main"}>
         {!cloud && (
-          <>
-            <div className="prototype-note">
-              Early preview • The recipe is an original test fixture. Google login, video imports
-              and AI are not connected.
+          <header className="page-heading">
+            <div>
+              <p className="intro">A page to play with. A recipe to make your own.</p>
+              <h1>The sample notebook.</h1>
             </div>
-            <header>
-              <div>
-                <p className="intro">Your kitchen, collected.</p>
-                <h1>
-                  A place for the recipes
-                  <br />
-                  you want to make.
-                </h1>
-              </div>
-              <Leaf className="leaf" size={70} strokeWidth={1} />
-            </header>
-            <section id="capture" className="capture" aria-labelledby="capture-title">
-              <div>
-                <h2 id="capture-title">From your saved videos to your table.</h2>
-                <p>Instagram comes first. We’re testing what a public link can reliably tell us.</p>
-              </div>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setNotice(
-                    "Live imports are not enabled yet. No request or model call was made. Try the sample review below.",
-                  );
-                }}
-              >
-                <label htmlFor="link">Instagram recipe link</label>
-                <div className="input-row">
-                  <input
-                    id="link"
-                    type="url"
-                    value={link}
-                    onChange={(e) => setLink(e.target.value)}
-                    placeholder="https://www.instagram.com/reel/…"
-                    required
-                  />
-                  <Button type="submit">Check availability</Button>
-                </div>
-              </form>
-            </section>
-          </>
+            <p className="handwritten heading-note">Pull up a chair.</p>
+          </header>
         )}
-        <output className="notice" aria-live="polite">
+        <output className="notice" aria-live="polite" hidden={captureNotice !== ""}>
           {notice}
         </output>
         <section className="recipe" id="recipe" aria-labelledby="recipe-title">
@@ -194,6 +140,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                   setEditing(true);
                   setCooking(false);
                   setNotice("");
+                  setCaptureNotice("");
                 }}
               >
                 <Pencil />
@@ -201,7 +148,9 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
               </Button>
               <Button
                 disabled={pending}
+                aria-pressed={cooking}
                 onClick={() => {
+                  setCaptureNotice("");
                   setCooking(!cooking);
                   setEditing(false);
                 }}
@@ -212,8 +161,8 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
             </div>
           </div>
           {editing ? (
-            <fieldset className="editor" disabled={pending}>
-              <h2>Review your recipe</h2>
+            <fieldset className="editor paper-sheet" disabled={pending}>
+              <h2 id="recipe-title">Review your recipe</h2>
               <p>Keep what the source says. Leave unknown amounts empty.</p>
               <label htmlFor="title">Recipe title</label>
               <input
@@ -290,6 +239,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                   onClick={() => {
                     setEditing(false);
                     setDraft(recipe);
+                    setCaptureNotice("");
                     setNotice("Changes discarded.");
                   }}
                 >
@@ -298,36 +248,37 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
               </div>
             </fieldset>
           ) : (
-            <>
-              <h2 id="recipe-title" className="recipe-name">
-                {recipe.title}
-              </h2>
-              {!cloud && (
-                <p className="recipe-deck">
-                  A simple pan, a squeeze of lemon, and something good to eat.
-                </p>
-              )}
-              <div className="facts">
-                <span>{recipe.servings ?? "Not stated"} servings in source</span>
-                <span>
-                  Cooking time:{" "}
-                  {recipe.cookMinutes === null ? "not stated" : `${recipe.cookMinutes} minutes`}
-                </span>
-              </div>
-              {(!cloud || recipe.warnings.length > 0) && (
-                <div className="review-note">
-                  <strong>Worth checking</strong>
-                  <p>
-                    {recipe.warnings.join(" ")}{" "}
-                    {!cloud &&
-                      "No video has been analyzed. This sample is written for testing, not imported from a creator."}
-                  </p>
+            <div
+              className={cooking ? "book-spread recipe-pages cooking" : "book-spread recipe-pages"}
+            >
+              <div className="paper-page ingredients-page">
+                <div className="page-caption">
+                  <span>Recipe</span>
+                  <span>01</span>
                 </div>
-              )}
-              <div className={cooking ? "recipe-columns cooking" : "recipe-columns"}>
-                <section>
+                <div className="recipe-title-block">
+                  <h2 id="recipe-title" className="recipe-name">
+                    {recipe.title}
+                  </h2>
+                  {!cloud && (
+                    <p className="recipe-deck">
+                      A simple pan, a squeeze of lemon, and something good to eat.
+                    </p>
+                  )}
+                </div>
+                <div className="facts">
+                  <span>
+                    <Users size={16} aria-hidden="true" /> {recipe.servings ?? "Not stated"}{" "}
+                    servings in source
+                  </span>
+                  <span>
+                    <Clock3 size={16} aria-hidden="true" /> Cooking time:{" "}
+                    {recipe.cookMinutes === null ? "not stated" : `${recipe.cookMinutes} minutes`}
+                  </span>
+                </div>
+                <section aria-labelledby="ingredients-title">
                   <div className="ingredients-heading">
-                    <h3>Ingredients</h3>
+                    <h3 id="ingredients-title">Ingredients</h3>
                     <label>
                       Servings
                       <select
@@ -364,34 +315,101 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                     temperature.
                   </p>
                 </section>
-                <section>
-                  <h3>Let’s make it</h3>
-                  <ol className="steps">
-                    {recipe.steps.map((step, index) => (
-                      <li key={step.id}>
-                        <span className="step-number">{index + 1}</span>
-                        <div>
-                          <p>{step.text}</p>
-                          {cooking && (
-                            <label className="done">
-                              <input type="checkbox" />
-                              Done
-                            </label>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ol>
-                </section>
+                <span className="page-folio">The good stuff</span>
               </div>
-            </>
+              <section className="paper-page preparation-page" aria-labelledby="preparation-title">
+                <div className="page-caption">
+                  <span>Preparation</span>
+                  <span>02</span>
+                </div>
+                <div className="preparation-heading">
+                  <h3 id="preparation-title">Let’s make it</h3>
+                  <span className="handwritten">Apron on, world off.</span>
+                </div>
+                <ol className="steps">
+                  {recipe.steps.map((step, index) => (
+                    <li key={step.id}>
+                      <span className="step-number">{index + 1}</span>
+                      <div>
+                        <p>{step.text}</p>
+                        {cooking && (
+                          <label className="done">
+                            <input type="checkbox" />
+                            Done
+                          </label>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+                {(!cloud || recipe.warnings.length > 0) && (
+                  <div className="review-note">
+                    <strong>Worth checking</strong>
+                    <p>
+                      {recipe.warnings.join(" ")}{" "}
+                      {!cloud &&
+                        "No video has been analyzed. This sample is written for testing, not imported from a creator."}
+                    </p>
+                  </div>
+                )}
+
+                {!cloud && (
+                  <div className="recipe-tail">
+                    <KitchenSketch />
+                    <span className="handwritten">
+                      A little lemon,
+                      <br />a little love.
+                    </span>
+                  </div>
+                )}
+                <span className="page-folio">
+                  {cooking ? "One step at a time" : "Made to be made again"}
+                </span>
+              </section>
+            </div>
           )}
         </section>
         {!cloud && (
-          <footer>
-            Private by design. Honest about what’s known.
-            <span>Prototype data stays in this browser.</span>
-          </footer>
+          <>
+            <section id="capture" className="capture" aria-labelledby="capture-title">
+              <div className="capture-intro">
+                <Link2 size={22} strokeWidth={1.5} aria-hidden="true" />
+                <div>
+                  <h2 id="capture-title">Found something you’d love to cook?</h2>
+                  <p>
+                    Instagram imports are not enabled yet. This is a demo form; no link will be
+                    opened or recipe imported.
+                  </p>
+                </div>
+              </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setNotice("");
+                  setCaptureNotice(
+                    "Live imports are not enabled yet. No request or model call was made. Try the sample review above.",
+                  );
+                }}
+              >
+                <label htmlFor="link">Instagram recipe link</label>
+                <div className="input-row">
+                  <input
+                    id="link"
+                    type="url"
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
+                    placeholder="https://www.instagram.com/reel/…"
+                    required
+                  />
+                  <Button type="submit" variant="outline">
+                    Check availability
+                  </Button>
+                </div>
+                {captureNotice && <output className="notice">{captureNotice}</output>}
+              </form>
+            </section>
+            <NotebookFooter sample />
+          </>
         )}
       </Main>
     </div>
