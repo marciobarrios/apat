@@ -55,6 +55,7 @@ export const ImportRecord = z.object({
 });
 export type ImportRecordData = z.infer<typeof ImportRecord>;
 export const ImportList = z.object({
+  configured: z.boolean(),
   imports: z.array(ImportRecord),
   nextCursor: z.string().nullable(),
 });

@@ -38,7 +38,7 @@ async function fixture(page: Page) {
       return;
     }
     if (request.method() === "GET") {
-      await route.fulfill({ json: { imports: jobs, nextCursor: null } });
+      await route.fulfill({ json: { configured: true, imports: jobs, nextCursor: null } });
       return;
     }
     if (request.url().endsWith("/save")) {
@@ -144,28 +144,53 @@ test("authored import: saving an unchanged draft saves the imported recipe", asy
   expect(mock.recipes[0].edited.title).toBe("Authored imported recipe");
 });
 
-test("authored import: an older initial list cannot erase a newly admitted draft", async ({
-  page,
-}) => {
-  await fixture(page);
+test("authored import: checks availability before allowing submission", async ({ page }) => {
+  const mock = await fixture(page);
   let release: (() => void) | undefined;
-  let first = true;
   await page.route("**/api/imports", async (route) => {
-    if (route.request().method() === "GET" && first) {
-      first = false;
-      await new Promise<void>((resolve) => {
-        release = resolve;
-      });
-      await route.fulfill({ json: { imports: [], nextCursor: null } });
-    } else await route.fallback();
+    await new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await route.fulfill({ json: { configured: true, imports: [], nextCursor: null } });
   });
   await page.goto("/");
-  await page.getByLabel("Instagram or YouTube recipe link").fill("https://youtu.be/abcdefghijk");
-  await page.getByRole("button", { name: "Import recipe", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Authored imported recipe" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Checking imports…" })).toBeDisabled();
+  await expect(page.getByLabel("Instagram or YouTube recipe link")).toBeDisabled();
+  expect(mock.keys).toHaveLength(0);
   release?.();
-  await page.getByRole("button", { name: "Back to imports" }).click();
-  await expect(page.getByRole("button", { name: "Review draft" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Import recipe", exact: true })).toBeEnabled();
+});
+
+test("authored import: disabled setup explains the blocker before a paid action", async ({
+  page,
+}) => {
+  const mock = await fixture(page);
+  await page.route("**/api/imports", (route) =>
+    route.fulfill({
+      json: { configured: false, imports: [], nextCursor: null },
+    }),
+  );
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Imports unavailable" })).toBeDisabled();
+  await expect(
+    page.getByText("The notebook owner needs to finish connecting", { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add a recipe", exact: true })).toBeEnabled();
+  expect(mock.keys).toHaveLength(0);
+});
+
+test("authored import: setup removed after loading disables further attempts", async ({ page }) => {
+  const mock = await fixture(page);
+  await page.goto("/");
+  await page.getByLabel("Instagram or YouTube recipe link").fill("https://youtu.be/abcdefghijk");
+  await page.route("**/api/imports", async (route) => {
+    if (route.request().method() === "POST")
+      await route.fulfill({ status: 503, json: { error: "imports_not_configured" } });
+    else await route.fallback();
+  });
+  await page.getByRole("button", { name: "Import recipe", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Imports unavailable" })).toBeDisabled();
+  expect(mock.keys).toHaveLength(0);
 });
 
 test("authored import: review can add missing ingredients/steps and preserve ranges", async ({

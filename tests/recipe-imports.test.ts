@@ -38,6 +38,23 @@ afterEach(async () => {
   await client.close();
 });
 
+it("reports configuration without exposing policy secrets and preserves existing receipts when disabled", async () => {
+  const imports = service();
+  await imports.start(input());
+  const enabled = await imports.list();
+  expect(enabled.configured).toBe(true);
+  expect(JSON.stringify(enabled)).not.toContain("authored-test-key");
+  const disabled = service(alice, undefined, () => {
+    throw new AccessError("imports_not_configured", 503);
+  });
+  const list = await disabled.list();
+  expect(list.configured).toBe(false);
+  expect(list.imports).toHaveLength(1);
+  await expect(disabled.start(input("https://youtu.be/abcdefghijk"))).rejects.toThrow(
+    "imports_not_configured",
+  );
+});
+
 it("persists a receipt, claims exactly once and saves edited content separately from imported evidence", async () => {
   let calls = 0;
   const imports = service(alice, async () => {

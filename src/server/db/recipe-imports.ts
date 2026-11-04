@@ -84,7 +84,15 @@ export function createRecipeImports(
         )
         .orderBy(desc(recipeImports.createdAt), desc(recipeImports.id))
         .limit(21);
+      let configured = true;
+      try {
+        policy();
+      } catch (error) {
+        if (!(error instanceof AccessError) || error.code !== "imports_not_configured") throw error;
+        configured = false;
+      }
       return {
+        configured,
         imports: rows.slice(0, 20).map(publicRecord),
         nextCursor: rows.length > 20 ? rows[19].id : null,
       };
