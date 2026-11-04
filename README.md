@@ -39,4 +39,4 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Real one-account local Google/Neon persistence is verified; storage/model/worker, two-real-account, cross-device and physical-iOS checks remain pending. Existing Vercel production is deployed; this feature branch disables automatic preview deployment. No service configuration is written by builds/tests.
+See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Real one-account local Google/Neon persistence is verified; storage/model/worker, two-real-account, cross-device and physical-iOS checks remain pending. Existing Vercel production is deployed. Vercel previews for every PR are pre-approved; production deployments still require explicit approval. No service configuration is written by builds/tests.
