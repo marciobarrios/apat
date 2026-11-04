@@ -11,9 +11,9 @@ The user requested **Mamitsu** for Instagram and YouTube imports, alongside manu
 ## Verified repository/service state
 
 - PR #2 is merged; remote main and this feature's starting point are `890c1e2`. The current worktree is `t3/mamitsu-recipe-import`. Older handoff paths/branch states are historical.
-- Existing Vercel project `apat` has a ready production deployment. Read-only inspection found four production app/Auth variables, development Neon integration variables, and no preview variables. No variables or project settings were changed here. Only `feat/neon-private-library` is disabled in `vercel.json`.
+- Existing Vercel project `apat` has a ready production deployment. Initial inspection found no preview variables; Neon later auto-created branch-scoped database variables. The approved activation now configures this PR branch only, with a restricted application connection and isolated Auth/cookie/origin/credit settings. Only `feat/neon-private-library` is disabled in `vercel.json`.
 - The November 4 Mamitsu Usage inspection was read-only and used the user's explicitly signed-in T3 browser. Existing requests/schemas informed the adapter; they are not live tests of this implementation.
-- The existing Neon production setup and one-account local manual-storage evidence are documented in [NEON-PRODUCTION-STATUS.md](NEON-PRODUCTION-STATUS.md). Do not repeat setup or assume local credential paths/session state survive into this worktree. No new remote migration, role grants, Auth-origin change or provisioning was performed.
+- Historical production setup and one-account local manual-storage evidence are in [NEON-PRODUCTION-STATUS.md](NEON-PRODUCTION-STATUS.md). Production setup was not repeated. The approved current work applied migration `0002` and restricted role grants only to the verified isolated preview branch; its Auth origin was already trusted.
 
 ## Completed implementation
 
@@ -24,11 +24,11 @@ The user requested **Mamitsu** for Instagram and YouTube imports, alongside manu
 - [x] Instagram Reel/YouTube import UI, restored receipts, pending/review/failure states, source attribution, review/edit/save, unknown-serving handling and manual entry retained. `/sample` remains an authored browser-only fixture, never an import result.
 - [x] Authored provider, PGlite and desktop/mobile browser coverage. These are code-contract checks, not provider accuracy or Neon/Vercel integration evidence. See [VERIFICATION.md](VERIFICATION.md) for the final run.
 
-## Next action: activate and verify the approved preview
+## Next action: finish approved preview activation and verify
 
-1. Review the PR and approve the database/Auth data boundary, migration `0002` and runtime role grants. An isolated preview branch requires provisioning approval; production reuse requires explicit acceptance that preview shares real notebook data. Do not silently copy production credentials.
-2. Approve scoped preview DB/Auth/origin configuration and any exact OAuth trusted-origin change. Securely supply the existing Mamitsu API key; approve numerical lifetime credit ceilings and the real trial budget. The proposed 33-credit ceiling in MAMITSU.md is not authorization.
-3. Configure/redeploy the approved preview, then verify real sign-in, one Reel, one YouTube video, provider usage, restored receipts and review/save/export. Keep model accuracy/failure observations separate from authored fixtures. No production promotion or merge follows automatically.
+1. The user approved preview-only setup and up to 33 existing Mamitsu credits. Actual Postgres settings confirm isolated preview branch `br-summer-shadow-ba3j33yn`; migration `0002` and a restricted runtime role are applied and verified. Auth/origin/cookie/credit variables are configured only for this feature branch. The exact origin was already trusted in the snapshot. See MAMITSU.md for the live setup evidence.
+2. Finish secure existing-key handoff and real browser login. Imports remain disabled while these are pending. The app must use `APAT_DATABASE_URL`: Neon regenerates its default owner URL on redeploy. Regression tests enforce the override and owner-role refusal.
+3. Redeploy the current PR head, verify real sign-in, one Reel and one YouTube video within the 33-credit ceiling, provider usage, restored receipts and review/save/export. Keep model accuracy/failure observations separate from authored fixtures. No production promotion or merge follows automatically.
 
 ## Remaining product acceptance
 
