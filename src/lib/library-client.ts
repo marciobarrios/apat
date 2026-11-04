@@ -15,6 +15,16 @@ const messages: Record<string, string> = {
     "This save key was already used for different content. Reload the library before trying again.",
   not_found: "This recipe is unavailable in your account.",
   invalid_input: "Check the recipe fields and try again.",
+  imports_not_configured:
+    "Video imports are waiting for secure setup. You can still add recipes manually.",
+  unsupported_url: "Use a public Instagram Reel or a YouTube video / Shorts link.",
+  import_budget_exhausted:
+    "The notebook’s import credit limit has been reached. You can still add recipes manually.",
+  import_limit:
+    "An import is still running or the import limit has been reached. Wait before starting another.",
+  import_already_started:
+    "This video is already being read and can’t be cancelled. Its result will appear here.",
+  import_not_ready: "This import is not ready to save. Refresh its status first.",
 };
 export class LibraryError extends Error {
   constructor(public readonly code: string) {

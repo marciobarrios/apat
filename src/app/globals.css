@@ -757,10 +757,10 @@ h3 {
   gap: 0 16px;
 }
 .ingredient-edit label {
-  grid-row: 1;
+  grid-column: 1 / -1;
 }
 .ingredient-edit input {
-  grid-row: 2;
+  grid-column: 1 / -1;
 }
 .ingredient-edit small {
   grid-column: 1 / -1;
@@ -856,6 +856,54 @@ h3 {
 .index-note {
   color: var(--herb);
   margin: 20px 0 0;
+}
+.import-area {
+  margin: 24px 0;
+}
+.import-list {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 16px;
+}
+.import-list li {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 20px;
+}
+.import-list li > div:first-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  align-items: baseline;
+}
+.import-list li strong {
+  flex: 1 1 200px;
+}
+.import-list output,
+.import-list a,
+.import-list p,
+.source-attribution,
+.source-evidence {
+  font-size: 13px;
+}
+.import-list output,
+.source-evidence {
+  color: var(--pencil);
+}
+.source-evidence {
+  display: block;
+  margin-top: 8px;
+}
+.import-list .actions:not(:empty) {
+  margin-top: 12px;
+}
+.import-list small {
+  overflow-wrap: anywhere;
+}
+.import-review > .actions {
+  margin-bottom: 12px;
 }
 @media (hover: hover) and (pointer: fine) {
   .notebook-tabs a:hover {

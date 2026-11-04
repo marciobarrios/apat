@@ -66,3 +66,20 @@ The welcome screen, private recipe index, manual creation, authored sample, revi
 - Sample capture feedback now appears alongside the demo form. Sample edits/scaling/export, unknown facts, original evidence, account isolation, and save/error recovery remain covered by the existing suite. The outdated sample login banner was removed; imports remain explicitly unavailable.
 
 Browser account data was mocked; no live Google login, Neon integration, actual Instagram import, paid inference, external migration, service configuration, or deployment was performed. PGlite remains evidence of local PostgreSQL behavior only. This is a UI checkpoint, not completion of the import milestone or physical-device verification.
+
+## Mamitsu import implementation — November 4, 2026
+
+User-requested Mamitsu integration adds Instagram Reel and YouTube import receipts, validated recipe drafts, review/edit/save and source attribution beside manual entry. Drizzle migration `0002_wonderful_slayback.sql` adds `recipe_imports`; it has only been applied to local PGlite databases. No external migration/grant, new credential, provider extraction, Vercel environment mutation, provisioning or production deployment was performed during implementation.
+
+Verified locally:
+
+- `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm test:browser` pass. Final totals: 131 unit/PGlite tests, 24 vendored lint-rule suites and 54 desktop/mobile Chromium browser checks against the built server.
+- Authored Mamitsu envelopes verify the restricted schema's keywords/size/depth, original-language/unknown-fact preservation, runtime validation, canonical source binding, request/response bounds, sanitized errors, charged/free/ambiguous classifications and one transport attempt.
+- Real Drizzle SQL on local PostgreSQL/PGlite verifies competing admissions, global/owner conservative credit holds, intent/source deduplication, claim/cancel races, paid-unknown preservation, free retries, attempt limits, owner/membership denial, revocation before dispatch and after submission, newest-first pagination, restricted runtime grants and transactional reviewed saves with separate original/edited content. This is not Neon integration evidence.
+- Authored browser/API fixtures verify both source forms, unchanged and corrected draft saves, evidence preservation, ingredient/step additions, ranges/unknown-serving behavior, reload/pending restoration, lost-response idempotency, stale-account denial, an older list-response race and no paid retry/cancellation for unknown outcomes. No paid provider, real login, Neon, Vercel or physical iOS test is claimed.
+- A deliberate credit-classification mutation made the Mamitsu failure test fail; the original source was restored before the passing checks.
+- Read-only Mamitsu Usage/schema inspection used the user's signed-in T3 browser. Only schema structure/status/credit metadata was inspected for implementation; creator captions/media were not copied into source, fixtures, commits or logs.
+- Read-only Vercel configuration inspection found existing production app/Auth variables and no preview variables. Normal Git preview creation is allowed for this feature branch; the old foundation branch remains disabled. No Vercel settings/secrets were changed.
+- `pnpm audit --prod` is **not clean**: pre-existing transitive Better Auth, Zod, esbuild and deepmerge advisories remain. No dependencies changed. Reachability, the unverified managed Auth patch level, and the November 11 review date are documented in [MAMITSU.md](MAMITSU.md).
+
+Remaining gates and limitations: approve the exact preview database/Auth data boundary, migration/grants, scoped secrets/origins and credit limits; then perform explicitly approved real Reel/YouTube trials and compare provider usage. Next.js `after` is bounded dispatch, not a durable retrying worker. An interrupted claimed request becomes a held unknown outcome requiring operator reconciliation, never an automatic paid replay. This PR does not satisfy the full acquisition/evaluation/hosted-beta acceptance gate. See [MAMITSU.md](MAMITSU.md) and [PLAN.md](PLAN.md).

@@ -3,11 +3,12 @@ import { and, asc, eq, exists, gt, sql } from "drizzle-orm";
 import type { drizzle } from "drizzle-orm/node-postgres";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import { CreateRecipe, SavedRecipe, UpdateRecipe } from "../../lib/library-contract";
+import { Recipe, type RecipeData } from "../../lib/recipe";
 import { AccessError } from "../errors";
 import { memberships, recipes } from "./schema";
 
 // Shared Drizzle SQL implementation: node-postgres in the app, PGlite in isolated tests.
-type Database = PgDatabase<PgQueryResultHKT, ReturnType<typeof drizzle>["_"]["fullSchema"]>;
+export type Database = PgDatabase<PgQueryResultHKT, ReturnType<typeof drizzle>["_"]["fullSchema"]>;
 export type Identity = { id: string; name: string; emailVerified: boolean };
 
 export function createLibrary(db: Database, identity: Identity) {
@@ -33,6 +34,47 @@ export function createLibrary(db: Database, identity: Identity) {
     if (!row) throw new AccessError("not_found", 404);
     return SavedRecipe.parse(row);
   }
+  async function createRecord(original: RecipeData, edited: RecipeData, key: string) {
+    const hash = createHash("sha256")
+      .update(JSON.stringify(original === edited ? edited : { original, edited }))
+      .digest("hex");
+    return db.transaction(async (tx) => {
+      // Membership-filtered INSERT SELECT is one statement. Unique conflict handling
+      // serializes duplicate creates without requiring UPDATE privileges on memberships.
+      const [row] = await tx
+        .insert(recipes)
+        .select(
+          tx
+            .select({
+              id: sql<string>`${randomUUID()}`.as("id"),
+              ownerId: memberships.id,
+              version: sql<number>`1`.as("version"),
+              original: sql<RecipeData>`${JSON.stringify(original)}::jsonb`.as("original"),
+              edited: sql<RecipeData>`${JSON.stringify(edited)}::jsonb`.as("edited"),
+              creationKey: sql<string>`${key}`.as("creationKey"),
+              creationHash: sql<string>`${hash}`.as("creationHash"),
+              createdAt: sql<Date>`now()`.as("createdAt"),
+            })
+            .from(memberships)
+            .where(and(eq(memberships.id, identity.id), eq(memberships.active, 1))),
+        )
+        .onConflictDoNothing({ target: [recipes.ownerId, recipes.creationKey] })
+        .returning();
+      if (row) return SavedRecipe.parse(row);
+      const [membership] = await tx
+        .select()
+        .from(memberships)
+        .where(and(eq(memberships.id, identity.id), eq(memberships.active, 1)));
+      if (!membership) throw new AccessError("invitation_required", 403);
+      const [existing] = await tx
+        .select()
+        .from(recipes)
+        .where(and(eq(recipes.ownerId, identity.id), eq(recipes.creationKey, key)));
+      if (!existing) throw new Error("Recipe creation did not settle");
+      if (existing.creationHash !== hash) throw new AccessError("idempotency_conflict", 409);
+      return SavedRecipe.parse(existing);
+    });
+  }
   return {
     async account() {
       await requireMembership();
@@ -54,47 +96,10 @@ export function createLibrary(db: Database, identity: Identity) {
     get,
     async create(input: unknown) {
       const parsed = CreateRecipe.parse(input);
-      const hash = createHash("sha256").update(JSON.stringify(parsed.recipe)).digest("hex");
-      return db.transaction(async (tx) => {
-        // Membership-filtered INSERT SELECT is one statement. Unique conflict handling
-        // serializes duplicate creates without requiring UPDATE privileges on memberships.
-        const [row] = await tx
-          .insert(recipes)
-          .select(
-            tx
-              .select({
-                id: sql<string>`${randomUUID()}`.as("id"),
-                ownerId: memberships.id,
-                version: sql<number>`1`.as("version"),
-                original: sql<typeof parsed.recipe>`${JSON.stringify(parsed.recipe)}::jsonb`.as(
-                  "original",
-                ),
-                edited: sql<typeof parsed.recipe>`${JSON.stringify(parsed.recipe)}::jsonb`.as(
-                  "edited",
-                ),
-                creationKey: sql<string>`${parsed.key}`.as("creationKey"),
-                creationHash: sql<string>`${hash}`.as("creationHash"),
-                createdAt: sql<Date>`now()`.as("createdAt"),
-              })
-              .from(memberships)
-              .where(and(eq(memberships.id, identity.id), eq(memberships.active, 1))),
-          )
-          .onConflictDoNothing({ target: [recipes.ownerId, recipes.creationKey] })
-          .returning();
-        if (row) return SavedRecipe.parse(row);
-        const [membership] = await tx
-          .select()
-          .from(memberships)
-          .where(and(eq(memberships.id, identity.id), eq(memberships.active, 1)));
-        if (!membership) throw new AccessError("invitation_required", 403);
-        const [existing] = await tx
-          .select()
-          .from(recipes)
-          .where(and(eq(recipes.ownerId, identity.id), eq(recipes.creationKey, parsed.key)));
-        if (!existing) throw new Error("Recipe creation did not settle");
-        if (existing.creationHash !== hash) throw new AccessError("idempotency_conflict", 409);
-        return SavedRecipe.parse(existing);
-      });
+      return createRecord(parsed.recipe, parsed.recipe, parsed.key);
+    },
+    async createImported(original: RecipeData, edited: RecipeData, key: string) {
+      return createRecord(Recipe.parse(original), Recipe.parse(edited), key);
     },
     async update(id: string, input: unknown) {
       const parsed = UpdateRecipe.parse(input);
