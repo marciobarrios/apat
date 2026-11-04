@@ -27,8 +27,8 @@ The user requested **Mamitsu** for Instagram and YouTube imports, alongside manu
 ## Next action: finish approved preview activation and verify
 
 1. The user approved preview-only setup and up to 33 existing Mamitsu credits. Actual Postgres settings confirm isolated preview branch `br-summer-shadow-ba3j33yn`; migration `0002` and a restricted runtime role are applied and verified. Auth/origin/cookie/credit variables are configured only for this feature branch. The exact origin was already trusted in the snapshot. See MAMITSU.md for the live setup evidence.
-2. Finish secure existing-key handoff and real browser login. Imports remain disabled while these are pending. The app must use `APAT_DATABASE_URL`: Neon regenerates its default owner URL on redeploy. Regression tests enforce the override and owner-role refusal.
-3. Redeploy the current PR head, verify real sign-in, one Reel and one YouTube video within the 33-credit ceiling, provider usage, restored receipts and review/save/export. Keep model accuracy/failure observations separate from authored fixtures. No production promotion or merge follows automatically.
+2. Real preview Google login/session restoration and authenticated account/recipe/import reads are now verified after adding the exact preview callback to the existing custom Google OAuth client. Finish the secure existing-Mamitsu-key handoff; imports remain disabled until then. The app must use `APAT_DATABASE_URL`: Neon regenerates its default owner URL on redeploy. Regression tests enforce the override and owner-role refusal.
+3. Install the key, enable and redeploy the preview, then verify one Reel and one YouTube video within the 33-credit ceiling, provider usage, restored receipts and review/save/export. Keep model accuracy/failure observations separate from authored fixtures. No production promotion or merge follows automatically.
 
 ## Remaining product acceptance
 
