@@ -95,6 +95,7 @@ export function RecipeImporter({
     };
   }, [refresh, report]);
   const active = jobs.some((job) => job.state === "queued" || job.state === "extracting");
+  const visibleJobs = jobs.filter((job) => job.state !== "saved");
   useEffect(() => {
     if (!active) return;
     const controller = new AbortController();
@@ -240,11 +241,11 @@ export function RecipeImporter({
       <output className="notice" aria-live="polite">
         {message}
       </output>
-      {jobs.length > 0 && (
+      {visibleJobs.length > 0 && (
         <>
           <h2>Imports</h2>
           <ul className="import-list">
-            {jobs.map((job) => (
+            {visibleJobs.map((job) => (
               <li key={job.id}>
                 <div>
                   <strong>
@@ -305,33 +306,33 @@ export function RecipeImporter({
               </li>
             ))}
           </ul>
-          {cursor && (
-            <Button
-              variant="outline"
-              onClick={async () => {
-                try {
-                  const list = await libraryRequest(
-                    `/api/imports?cursor=${encodeURIComponent(cursor)}`,
-                    ImportList,
-                    undefined,
-                    accountId,
-                  );
-                  if (alive.current) {
-                    setJobs((previous) => [
-                      ...previous,
-                      ...list.imports.filter((row) => !previous.some((old) => old.id === row.id)),
-                    ]);
-                    setCursor(list.nextCursor);
-                  }
-                } catch (error) {
-                  report(error);
-                }
-              }}
-            >
-              Older imports
-            </Button>
-          )}
         </>
+      )}
+      {cursor && (
+        <Button
+          variant="outline"
+          onClick={async () => {
+            try {
+              const list = await libraryRequest(
+                `/api/imports?cursor=${encodeURIComponent(cursor)}`,
+                ImportList,
+                undefined,
+                accountId,
+              );
+              if (alive.current) {
+                setJobs((previous) => [
+                  ...previous,
+                  ...list.imports.filter((row) => !previous.some((old) => old.id === row.id)),
+                ]);
+                setCursor(list.nextCursor);
+              }
+            } catch (error) {
+              report(error);
+            }
+          }}
+        >
+          Older imports
+        </Button>
       )}
     </section>
   );
