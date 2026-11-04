@@ -1,6 +1,6 @@
 # apat
 
-A private recipe notebook for manual recipes and saved Instagram/YouTube videos. **This branch adds a Mamitsu import → review → private save flow. Local authored provider/API fixtures and PostgreSQL/PGlite tests verify the implementation; live Mamitsu and Vercel preview activation remain pending.** See [Mamitsu setup and evidence boundaries](docs/MAMITSU.md).
+A private recipe notebook for manual recipes and saved Instagram/YouTube videos. **This branch adds a Mamitsu import → review → private save flow. The isolated Vercel Preview is active: real Instagram and YouTube imports, private saves, reload and export are verified. Authored fixtures and PostgreSQL/PGlite tests cover additional cases; provider accuracy and full beta acceptance remain separate gates.** See [Mamitsu setup and evidence boundaries](docs/MAMITSU.md).
 
 To resume work, read [the current implementation plan](docs/PLAN.md). It records what is done, what is missing and the next steps in order; no separate milestone briefing is needed.
 
@@ -39,4 +39,4 @@ pnpm exec playwright install chromium
 pnpm test:browser
 ```
 
-See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Historical one-account local Google/Neon persistence is verified. Mamitsu integration and hosted preview activation, two-real-account, cross-device and physical-iOS checks remain pending. Production is deployed. Only the old `feat/neon-private-library` branch disables automatic preview deployment; this PR uses the normal Git preview path. No service configuration or migrations are written by builds/tests.
+See [implementation plan](docs/PLAN.md), [decisions/alternatives](docs/DECISIONS.md), and [verification](docs/VERIFICATION.md). Historical one-account local Google/Neon persistence is verified. Real hosted preview Google login and one Mamitsu import per provider are verified. Two-real-account, cross-device, physical-iOS and broader extraction-accuracy checks remain pending. Production is deployed. Only the old `feat/neon-private-library` branch disables automatic preview deployment; this PR uses the normal Git preview path. No service configuration or migrations are written by builds/tests.
