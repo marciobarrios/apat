@@ -5,9 +5,17 @@ const Config = z.object({
   DATABASE_URL: z.url().refine((value) => {
     if (!URL.canParse(value)) return false;
     const url = new URL(value);
+    let role: string;
+    try {
+      role = decodeURIComponent(url.username);
+    } catch {
+      return false;
+    }
     return (
       ["postgres:", "postgresql:"].includes(url.protocol) &&
       url.hostname.endsWith(".neon.tech") &&
+      role.length > 0 &&
+      role !== "neondb_owner" &&
       ["verify-full", "require"].includes(url.searchParams.get("sslmode") ?? "")
     );
   }),
@@ -26,7 +34,12 @@ const Config = z.object({
   }),
 });
 export function readConfig(env: Partial<NodeJS.ProcessEnv> = process.env) {
-  const result = Config.safeParse(env);
+  // Neon Git integration regenerates DATABASE_URL with the owner role. Keep a
+  // branch-scoped restricted connection separate; an invalid override fails closed.
+  const result = Config.safeParse({
+    ...env,
+    DATABASE_URL: env.APAT_DATABASE_URL ?? env.DATABASE_URL,
+  });
   // Never return schema errors containing secret values.
   if (!result.success) throw new AccessError("setup_required", 503);
   return result.data;
