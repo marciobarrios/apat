@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",
+    "@fontsource/caveat": "5.3.0",
     "@neondatabase/auth": "0.6.0-beta",
     "@tailwindcss/postcss": "4.3.3",
     "@vercel/functions": "3.10.1",
@@ -30,6 +31,7 @@
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "drizzle-orm": "0.45.4",
+    "geist": "1.9.0",
     "ipaddr.js": "2.5.0",
     "lucide-react": "1.59.0",
     "next": "16.4.2",

@@ -3,6 +3,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Notebook } from "./notebook";
+import { KitchenSketch, NotebookFooter, NotebookNav } from "./notebook-chrome";
+import { ArrowUpRight, BookOpen, Plus } from "lucide-react";
 import {
   Account,
   LibrarySnapshot,
@@ -30,7 +32,7 @@ function NewRecipe({
   const submitting = useRef(false);
   return (
     <form
-      className="recipe editor"
+      className="paper-sheet editor new-recipe"
       onSubmit={async (event) => {
         event.preventDefault();
         if (submitting.current) return;
@@ -85,6 +87,7 @@ function NewRecipe({
         }
       }}
     >
+      <p className="page-caption">A fresh page</p>
       <h2>Add your own recipe</h2>
       <p>Write one ingredient or instruction per line. Amounts remain as written; no AI is used.</p>
       <label htmlFor="new-title">Recipe title</label>
@@ -120,7 +123,7 @@ function NewRecipe({
         onChange={(e) => setSteps(e.target.value)}
         disabled={pending}
       />
-      <output>{error}</output>
+      <output className="notice">{error}</output>
       <div className="actions">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save recipe"}
@@ -280,70 +283,100 @@ export function Library() {
   }
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <Link className="wordmark" href="/">
-          apat<span>Recipes worth keeping.</span>
-        </Link>
-        <nav aria-label="Main">
-          <Link href="/">Your notebook</Link>
-          <Link href="/sample">Try the sample</Link>
-        </nav>
-        <p className="sidebar-note">
-          A little less scrolling.
-          <br />A little more cooking.
-        </p>
-        <span className="local-tag">Private beta</span>
-      </aside>
-      <main>
-        <div className="prototype-note">
-          Private recipe foundation • Instagram imports and AI extraction are not enabled.
-        </div>
-        <header>
+      <NotebookNav />
+      <main id="main">
+        <header className="page-heading">
           <div>
-            <p className="intro">Your kitchen, collected.</p>
+            <p className="intro">A little less scrolling. A little more cooking.</p>
             <h1>Your private notebook.</h1>
           </div>
+          <p className="handwritten heading-note">
+            Good food is worth
+            <br />
+            writing down.
+          </p>
         </header>
         <output className="notice">{loading ? "Opening your notebook…" : notice}</output>
         {!loading && !account && (
-          <section className="capture">
-            <h2>Recipes that follow you home.</h2>
-            <p>
-              Sign in with your invited Google account to save recipes and open them on another
-              device.
-            </p>
-            <div className="actions">
-              <Button
-                disabled={authPending || code === "setup_required"}
-                onClick={() => void authenticate(false)}
-              >
-                {authPending ? "Connecting…" : "Continue with Google"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setLoading(true);
-                  void load();
-                }}
-              >
-                Retry connection
-              </Button>
-              {["invitation_required", "verified_login_required"].includes(code) && (
+          <section
+            className="welcome-book book-spread"
+            aria-label="Welcome to your recipe notebook"
+          >
+            <div className="welcome-cover paper-page">
+              <span className="page-caption">The kitchen notebook</span>
+              <KitchenSketch />
+              <h2>
+                A place for
+                <br />
+                your good food.
+              </h2>
+              <p>
+                The everyday favourites.
+                <br />
+                The happy experiments.
+                <br />
+                The ones you’ll make again.
+              </p>
+              <div className="owner-inscription">
+                <span>From the kitchen of</span>
+                <span className="handwritten">you, of course</span>
+              </div>
+              <span className="page-folio">Collected with care</span>
+            </div>
+            <div className="welcome-entry paper-page">
+              <span className="page-caption">Make yourself at home</span>
+              <h2>Recipes that follow you home.</h2>
+              <p>
+                Sign in with your invited Google account to save recipes and open them on another
+                device.
+              </p>
+              <div className="actions">
+                <Button
+                  disabled={authPending || code === "setup_required"}
+                  onClick={() => void authenticate(false)}
+                >
+                  {authPending ? "Connecting…" : "Continue with Google"}
+                </Button>
                 <Button
                   variant="outline"
-                  disabled={authPending || busy || loading}
-                  onClick={() => void authenticate(true)}
+                  onClick={() => {
+                    setLoading(true);
+                    void load();
+                  }}
                 >
-                  Sign out
+                  Retry connection
                 </Button>
-              )}
+                {["invitation_required", "verified_login_required"].includes(code) && (
+                  <Button
+                    variant="outline"
+                    disabled={authPending || busy || loading}
+                    onClick={() => void authenticate(true)}
+                  >
+                    Sign out
+                  </Button>
+                )}
+              </div>
+              <div className="sample-invitation">
+                <span className="handwritten">Take a peek inside</span>
+                <Link href="/sample" className="sample-link">
+                  Explore the sample without an account{" "}
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </Link>
+                <p>An authored recipe to edit, scale, and cook through.</p>
+              </div>
+              <p className="availability-note">
+                Instagram imports are still in the works. For now, make it your own with recipes you
+                write.
+              </p>
+              <span className="page-folio">A new chapter in your kitchen</span>
             </div>
-            <Link href="/sample">Explore the sample without an account</Link>
           </section>
         )}
         {account && (
           <div className="account-area">
-            <p>Signed in as {account.name}</p>
+            <p className="account-caption">
+              Signed in as <strong>{account.name}</strong>
+            </p>
             <div className="actions">
               {!selected && !adding && (
                 <Button
@@ -352,7 +385,7 @@ export function Library() {
                     setAdding(true);
                   }}
                 >
-                  Add a recipe
+                  <Plus size={16} aria-hidden="true" /> Add a recipe
                 </Button>
               )}
               {!selected && !adding && (
@@ -496,10 +529,18 @@ export function Library() {
                 }}
               />
             ) : (
-              <>
+              <section className="library-index paper-sheet" aria-labelledby="index-title">
+                <div className="index-heading">
+                  <div>
+                    <p className="page-caption">A growing collection</p>
+                    <h2 id="index-title">Recipe index</h2>
+                  </div>
+                  <BookOpen size={28} strokeWidth={1} aria-hidden="true" />
+                </div>
                 {records.length === 0 && (
-                  <section className="capture library-empty">
-                    <h2>Your notebook is ready.</h2>
+                  <section className="library-empty">
+                    <KitchenSketch />
+                    <h3>Your notebook is ready.</h3>
                     <p>
                       Add a recipe of your own. The sample is kept separate from your private
                       library.
@@ -507,10 +548,11 @@ export function Library() {
                   </section>
                 )}
                 <ul className="library-list">
-                  {records.map((recipe) => (
+                  {records.map((recipe, index) => (
                     <li key={recipe.id}>
                       <Button
-                        variant="outline"
+                        variant="ghost"
+                        aria-label={recipe.edited.title}
                         onClick={async () => {
                           try {
                             setSelected(
@@ -528,7 +570,12 @@ export function Library() {
                           }
                         }}
                       >
-                        {recipe.edited.title}
+                        <span className="index-number" aria-hidden="true">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="index-recipe-title">{recipe.edited.title}</span>
+                        <span className="index-dots" aria-hidden="true" />
+                        <ArrowUpRight size={18} aria-hidden="true" />
                       </Button>
                     </li>
                   ))}
@@ -565,11 +612,12 @@ export function Library() {
                     Load more recipes
                   </Button>
                 )}
-              </>
+                <p className="handwritten index-note">Room for many more favourites.</p>
+              </section>
             )}
           </div>
         )}
-        <footer>Private by design. Honest about what’s known.</footer>
+        <NotebookFooter />
       </main>
     </div>
   );
