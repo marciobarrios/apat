@@ -47,6 +47,7 @@ export function RecipeImporter({
   const [cursor, setCursor] = useState<string | null>(null);
   const [review, setReview] = useState<ImportRecordData | null>(null);
   const [pending, setPending] = useState(false);
+  const [configured, setConfigured] = useState<boolean | null>(null);
   const [message, setMessage] = useState("");
   const submitting = useRef(false);
   const intent = useRef<{ url: string; key: string } | null>(null);
@@ -55,6 +56,8 @@ export function RecipeImporter({
   const report = useCallback(
     (error: unknown) => {
       if (!alive.current) return;
+      if (error instanceof LibraryError && error.code === "imports_not_configured")
+        setConfigured(false);
       setMessage(error instanceof Error ? error.message : "Import unavailable. Try again.");
       if (
         error instanceof LibraryError &&
@@ -74,6 +77,7 @@ export function RecipeImporter({
       const started = revision.current;
       const list = await libraryRequest("/api/imports", ImportList, { signal }, accountId);
       if (!alive.current || signal?.aborted || started !== revision.current) return;
+      setConfigured(list.configured);
       setJobs(list.imports);
       setCursor(list.nextCursor);
     },
@@ -107,7 +111,7 @@ export function RecipeImporter({
   }, [active, refresh, report]);
 
   async function start(sourceUrl: string, retry = false) {
-    if (submitting.current) return;
+    if (submitting.current || configured !== true) return;
     let source: ReturnType<typeof canonicalizeRecipeSource>;
     try {
       source = canonicalizeRecipeSource(sourceUrl);
@@ -207,13 +211,26 @@ export function RecipeImporter({
               value={url}
               onChange={(event) => setUrl(event.target.value)}
               placeholder="Paste a Reel, video or Shorts link"
-              aria-describedby="import-help"
-              disabled={pending}
+              aria-describedby="import-help import-availability"
+              disabled={pending || configured !== true}
             />
-            <Button type="submit" disabled={pending}>
-              {pending ? "Starting…" : "Import recipe"}
+            <Button type="submit" disabled={pending || configured !== true}>
+              {configured === null
+                ? "Checking imports…"
+                : configured === false
+                  ? "Imports unavailable"
+                  : pending
+                    ? "Starting…"
+                    : "Import recipe"}
             </Button>
           </div>
+          <output id="import-availability" className="notice" aria-live="polite">
+            {configured === false
+              ? "Video imports are not enabled yet. The notebook owner needs to finish connecting the import service. You can still add recipes manually."
+              : configured === null
+                ? "Checking whether video imports are available…"
+                : ""}
+          </output>
           <p id="import-help" className="small-note">
             AI imports use credits, including some failed attempts. Missing amounts stay unknown.
             You can return here while a video is being read.
@@ -252,7 +269,7 @@ export function RecipeImporter({
                   {job.retryable && (
                     <Button
                       variant="outline"
-                      disabled={pending}
+                      disabled={pending || configured !== true}
                       onClick={() => void start(job.sourceUrl, true)}
                     >
                       Retry import
