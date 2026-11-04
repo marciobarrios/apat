@@ -129,6 +129,9 @@ for (const source of [
     await expect(
       page.getByRole("button", { name: "My corrected recipe", exact: true }),
     ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Imports", exact: true })).toHaveCount(0);
+    await expect(page.getByText("Saved to notebook", { exact: true })).toHaveCount(0);
+    expect(mock.jobs[0].state).toBe("saved");
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
