@@ -32,6 +32,14 @@ export const Recipe = z.object({
     .max(100),
   warnings: z.array(z.string().max(500)).max(30),
   sourceUrl: z.url().nullable(),
+  provenance: z
+    .object({
+      provider: z.enum(["instagram", "youtube"]),
+      creator: z.string().max(200).nullable(),
+      extractionId: z.string().max(100),
+      schemaVersion: z.string().max(50),
+    })
+    .optional(),
 });
 export type RecipeData = z.infer<typeof Recipe>;
 export function scaleQuantity(

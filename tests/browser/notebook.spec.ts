@@ -59,12 +59,12 @@ test("keyboard flow and responsive page without overflow", async ({ page }, info
   await page.getByRole("button", { name: "Cancel editing" }).click();
   await page.screenshot({ path: `artifacts/${info.project.name}-notebook.png`, fullPage: true });
 });
-test("no unauthenticated live import endpoint exists", async ({ request }) => {
+test("imports fail closed without secure server configuration", async ({ request }) => {
   expect(
     (
       await request.post("/api/imports", {
         data: { url: "https://www.instagram.com/reel/DWJJrpcCLLP/" },
       })
     ).status(),
-  ).toBe(404);
+  ).toBe(503);
 });

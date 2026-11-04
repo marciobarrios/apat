@@ -12,6 +12,9 @@ import { sampleRecipe } from "../../src/lib/recipe";
 // Browser interaction tests deliberately mock HTTP, never Google/Neon verification.
 // The API suite separately executes these contracts against local PostgreSQL/PGlite.
 async function mockLibrary(page: Page) {
+  await page.route("**/api/imports", (route) =>
+    route.fulfill({ json: { imports: [], nextCursor: null } }),
+  );
   const records = new Map<string, SavedRecipeData>();
   const keys = new Map<string, string>();
   let createCount = 0;

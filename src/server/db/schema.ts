@@ -84,3 +84,38 @@ export const mediaObjects = pgTable("media_objects", {
   expiresAt: timestamp({ withTimezone: true }).notNull(),
   cleanupState: text().notNull().default("pending"),
 });
+
+export const recipeImports = pgTable(
+  "recipe_imports",
+  {
+    id: text().primaryKey(),
+    ownerId: text()
+      .notNull()
+      .references(() => memberships.id),
+    requestKey: text().notNull(),
+    sourceUrl: text().notNull(),
+    provider: text().notNull(),
+    state: text().notNull().default("queued"),
+    reservedCredits: integer().notNull(),
+    heldCredits: integer().notNull(),
+    extractionId: text(),
+    errorCode: text(),
+    draft: jsonb().$type<RecipeData>(),
+    recipeId: text().references(() => recipes.id),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("recipe_import_owner_key").on(t.ownerId, t.requestKey),
+    index("recipe_import_owner_created").on(t.ownerId, t.createdAt, t.id),
+    index("recipe_import_source").on(t.ownerId, t.sourceUrl),
+    check(
+      "recipe_import_credits",
+      sql`${t.reservedCredits} > 0 and ${t.heldCredits} >= 0 and ${t.heldCredits} <= ${t.reservedCredits}`,
+    ),
+    check(
+      "recipe_import_state",
+      sql`${t.state} in ('queued', 'extracting', 'needs_review', 'saved', 'failed', 'outcome_unknown', 'cancelled')`,
+    ),
+  ],
+);

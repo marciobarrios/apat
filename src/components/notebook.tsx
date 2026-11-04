@@ -1,10 +1,22 @@
 "use client";
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { Download, Pencil, Utensils, Clock3, Users, Link2 } from "lucide-react";
 import { KitchenSketch, NotebookFooter, NotebookNav } from "./notebook-chrome";
 import { Button } from "@/components/ui/button";
+import { RecipeEditor } from "./recipe-editor";
 import { Recipe, sampleRecipe, scaleQuantity, type RecipeData } from "@/lib/recipe";
 const storageKey = "apat:sample-notebook:v1";
+function ingredientAmount(
+  item: RecipeData["ingredients"][number],
+  base: number | null,
+  target: number,
+) {
+  if (item.quantity === null) return "To taste / not stated";
+  const scaled = (value: number) => (base === null ? value : scaleQuantity(value, base, target));
+  const range = item.quantityMax === null ? "" : `–${scaled(item.quantityMax)}`;
+  return `${scaled(item.quantity)}${range} ${item.unit ?? ""}`.trim();
+}
 function subscribe(listener: () => void) {
   window.addEventListener("storage", listener);
   return () => window.removeEventListener("storage", listener);
@@ -26,6 +38,7 @@ function readStoredRecipe(raw: string | null): RecipeData {
   }
 }
 type CloudRecipe = {
+  importDraft?: boolean;
   recipe: RecipeData;
   save: (recipe: RecipeData) => Promise<void>;
   export: () => Promise<void>;
@@ -52,7 +65,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
   async function save() {
     setCaptureNotice("");
     if (saving.current) return;
-    const parsed = Recipe.safeParse(draft);
+    const parsed = Recipe.safeParse(editing ? draft : recipe);
     if (!parsed.success) {
       setNotice("Add a title, every ingredient name and each instruction before saving.");
       return;
@@ -62,6 +75,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
       setPending(true);
       try {
         await cloud.save(parsed.data);
+        setServings(parsed.data.servings ?? 2);
         setNotice("Saved to your private notebook.");
         setEditing(false);
       } catch (error) {
@@ -83,6 +97,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
       );
     }
     setRecipe(parsed.data);
+    setServings(parsed.data.servings ?? 2);
     setEditing(false);
   }
   async function exportRecipe() {
@@ -124,14 +139,23 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
           <div className="recipe-top">
             <span className="evidence-badge">
               {cloud
-                ? "Private recipe · original evidence preserved"
+                ? cloud.importDraft
+                  ? "Import draft · review before saving"
+                  : "Private recipe · original evidence preserved"
                 : "Sample recipe · text evidence only"}
             </span>
             <div className="actions">
-              <Button variant="outline" disabled={pending} onClick={exportRecipe}>
-                <Download />
-                Export
-              </Button>
+              {cloud?.importDraft && (
+                <Button disabled={pending} onClick={save}>
+                  Save to notebook
+                </Button>
+              )}
+              {!cloud?.importDraft && (
+                <Button variant="outline" disabled={pending} onClick={exportRecipe}>
+                  <Download />
+                  Export
+                </Button>
+              )}
               <Button
                 variant="outline"
                 disabled={pending}
@@ -161,92 +185,19 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
             </div>
           </div>
           {editing ? (
-            <fieldset className="editor paper-sheet" disabled={pending}>
-              <h2 id="recipe-title">Review your recipe</h2>
-              <p>Keep what the source says. Leave unknown amounts empty.</p>
-              <label htmlFor="title">Recipe title</label>
-              <input
-                id="title"
-                value={draft.title}
-                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-              />
-              {draft.ingredients.map((item, index) => (
-                <div className="ingredient-edit" key={item.id}>
-                  <label htmlFor={`name-${item.id}`}>Ingredient {index + 1}</label>
-                  <input
-                    id={`name-${item.id}`}
-                    value={item.name}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        ingredients: draft.ingredients.map((i, n) =>
-                          n === index ? { ...i, name: e.target.value } : i,
-                        ),
-                      })
-                    }
-                  />
-                  <label htmlFor={`quantity-${item.id}`}>
-                    Quantity for {item.name || `ingredient ${index + 1}`}
-                  </label>
-                  <input
-                    id={`quantity-${item.id}`}
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={item.quantity ?? ""}
-                    placeholder="Not stated"
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        ingredients: draft.ingredients.map((i, n) =>
-                          n === index
-                            ? {
-                                ...i,
-                                quantity: e.target.value === "" ? null : Number(e.target.value),
-                              }
-                            : i,
-                        ),
-                      })
-                    }
-                  />
-                  <small>Original: {item.original}</small>
-                </div>
-              ))}
-              {draft.steps.map((step, index) => (
-                <div key={step.id}>
-                  <label htmlFor={`step-${step.id}`}>Step {index + 1}</label>
-                  <textarea
-                    id={`step-${step.id}`}
-                    value={step.text}
-                    onChange={(e) =>
-                      setDraft({
-                        ...draft,
-                        steps: draft.steps.map((s, n) =>
-                          n === index ? { ...s, text: e.target.value } : s,
-                        ),
-                      })
-                    }
-                  />
-                </div>
-              ))}
-              <div className="actions">
-                <Button disabled={pending} onClick={save}>
-                  {pending ? "Saving…" : "Save changes"}
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={pending}
-                  onClick={() => {
-                    setEditing(false);
-                    setDraft(recipe);
-                    setCaptureNotice("");
-                    setNotice("Changes discarded.");
-                  }}
-                >
-                  Cancel editing
-                </Button>
-              </div>
-            </fieldset>
+            <RecipeEditor
+              draft={draft}
+              setDraft={setDraft}
+              pending={pending}
+              importDraft={cloud?.importDraft}
+              onSave={() => void save()}
+              onCancel={() => {
+                setEditing(false);
+                setDraft(recipe);
+                setCaptureNotice("");
+                setNotice("Changes discarded.");
+              }}
+            />
           ) : (
             <div
               className={cooking ? "book-spread recipe-pages cooking" : "book-spread recipe-pages"}
@@ -260,6 +211,17 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                   <h2 id="recipe-title" className="recipe-name">
                     {recipe.title}
                   </h2>
+                  {recipe.sourceUrl && (
+                    <p className="source-attribution">
+                      <a href={recipe.sourceUrl} target="_blank" rel="noreferrer">
+                        View original{" "}
+                        {recipe.provenance?.provider === "youtube"
+                          ? "YouTube video"
+                          : "Instagram video"}
+                      </a>
+                      {recipe.provenance?.creator ? ` · ${recipe.provenance.creator}` : ""}
+                    </p>
+                  )}
                   {!cloud && (
                     <p className="recipe-deck">
                       A simple pan, a squeeze of lemon, and something good to eat.
@@ -283,14 +245,17 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                       Servings
                       <select
                         aria-label="Servings"
+                        disabled={recipe.servings === null}
                         value={servings}
                         onChange={(e) => setServings(Number(e.target.value))}
                       >
-                        {[1, 2, 4, 6].map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
+                        {[...new Set([1, 2, 4, 6, recipe.servings ?? 2])]
+                          .sort((a, b) => a - b)
+                          .map((n) => (
+                            <option key={n} value={n}>
+                              {n}
+                            </option>
+                          ))}
                       </select>
                     </label>
                   </div>
@@ -300,11 +265,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                         <label>
                           <input type="checkbox" />
                           <span>{item.name}</span>
-                          <strong>
-                            {item.quantity === null
-                              ? "To taste / not stated"
-                              : `${scaleQuantity(item.quantity, recipe.servings, servings)} ${item.unit ?? ""}`}
-                          </strong>
+                          <strong>{ingredientAmount(item, recipe.servings, servings)}</strong>
                         </label>
                         <small>{item.evidence.excerpt}</small>
                       </li>
@@ -332,6 +293,15 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                       <span className="step-number">{index + 1}</span>
                       <div>
                         <p>{step.text}</p>
+                        {cloud && (
+                          <small className="source-evidence">
+                            {step.evidence.kind} evidence
+                            {step.evidence.timestampSeconds === null
+                              ? ""
+                              : ` · ${step.evidence.timestampSeconds}s`}
+                            : {step.evidence.excerpt || "No excerpt supplied"}
+                          </small>
+                        )}
                         {cooking && (
                           <label className="done">
                             <input type="checkbox" />
@@ -377,8 +347,8 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                 <div>
                   <h2 id="capture-title">Found something you’d love to cook?</h2>
                   <p>
-                    Instagram imports are not enabled yet. This is a demo form; no link will be
-                    opened or recipe imported.
+                    This authored sample stays in your browser. Import public Instagram and YouTube
+                    videos in your private notebook.
                   </p>
                 </div>
               </div>
@@ -387,7 +357,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                   e.preventDefault();
                   setNotice("");
                   setCaptureNotice(
-                    "Live imports are not enabled yet. No request or model call was made. Try the sample review above.",
+                    "Imports are disabled in this authored sample. No request or model call was made. Open your private notebook to import a video.",
                   );
                 }}
               >
@@ -406,6 +376,7 @@ export function Notebook({ cloud }: { cloud?: CloudRecipe }) {
                   </Button>
                 </div>
                 {captureNotice && <output className="notice">{captureNotice}</output>}
+                <Link href="/">Open your private notebook</Link>
               </form>
             </section>
             <NotebookFooter sample />

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { Notebook } from "./notebook";
+import { RecipeImporter } from "./recipe-importer";
 import { KitchenSketch, NotebookFooter, NotebookNav } from "./notebook-chrome";
 import { ArrowUpRight, BookOpen, Plus } from "lucide-react";
 import {
@@ -365,8 +366,8 @@ export function Library() {
                 <p>An authored recipe to edit, scale, and cook through.</p>
               </div>
               <p className="availability-note">
-                Instagram imports are still in the works. For now, make it your own with recipes you
-                write.
+                Keep recipes you write, or import public Instagram and YouTube videos after signing
+                in.
               </p>
               <span className="page-folio">A new chapter in your kitchen</span>
             </div>
@@ -529,91 +530,104 @@ export function Library() {
                 }}
               />
             ) : (
-              <section className="library-index paper-sheet" aria-labelledby="index-title">
-                <div className="index-heading">
-                  <div>
-                    <p className="page-caption">A growing collection</p>
-                    <h2 id="index-title">Recipe index</h2>
+              <>
+                <RecipeImporter
+                  key={account.id}
+                  accountId={account.id}
+                  onError={report}
+                  onSaved={(saved) => {
+                    setRecords((previous) => [
+                      saved,
+                      ...previous.filter((row) => row.id !== saved.id),
+                    ]);
+                    setSelected(saved);
+                  }}
+                />
+                <section className="library-index paper-sheet" aria-labelledby="index-title">
+                  <div className="index-heading">
+                    <div>
+                      <p className="page-caption">A growing collection</p>
+                      <h2 id="index-title">Recipe index</h2>
+                    </div>
+                    <BookOpen size={28} strokeWidth={1} aria-hidden="true" />
                   </div>
-                  <BookOpen size={28} strokeWidth={1} aria-hidden="true" />
-                </div>
-                {records.length === 0 && (
-                  <section className="library-empty">
-                    <KitchenSketch />
-                    <h3>Your notebook is ready.</h3>
-                    <p>
-                      Add a recipe of your own. The sample is kept separate from your private
-                      library.
-                    </p>
-                  </section>
-                )}
-                <ul className="library-list">
-                  {records.map((recipe, index) => (
-                    <li key={recipe.id}>
-                      <Button
-                        variant="ghost"
-                        aria-label={recipe.edited.title}
-                        onClick={async () => {
-                          try {
-                            setSelected(
-                              await currentRequest(
-                                libraryRequest(
-                                  `/api/recipes/${recipe.id}`,
-                                  SavedRecipe,
-                                  undefined,
-                                  account.id,
+                  {records.length === 0 && (
+                    <section className="library-empty">
+                      <KitchenSketch />
+                      <h3>Your notebook is ready.</h3>
+                      <p>
+                        Import a video above or add a recipe of your own. The sample stays separate.
+                      </p>
+                    </section>
+                  )}
+                  <ul className="library-list">
+                    {records.map((recipe, index) => (
+                      <li key={recipe.id}>
+                        <Button
+                          variant="ghost"
+                          aria-label={recipe.edited.title}
+                          onClick={async () => {
+                            try {
+                              setSelected(
+                                await currentRequest(
+                                  libraryRequest(
+                                    `/api/recipes/${recipe.id}`,
+                                    SavedRecipe,
+                                    undefined,
+                                    account.id,
+                                  ),
                                 ),
-                              ),
-                            );
-                          } catch (error) {
-                            report(error);
-                          }
-                        }}
-                      >
-                        <span className="index-number" aria-hidden="true">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <span className="index-recipe-title">{recipe.edited.title}</span>
-                        <span className="index-dots" aria-hidden="true" />
-                        <ArrowUpRight size={18} aria-hidden="true" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-                {cursor && (
-                  <Button
-                    variant="outline"
-                    disabled={loading}
-                    onClick={async () => {
-                      setLoading(true);
-                      try {
-                        const list = await currentRequest(
-                          libraryRequest(
-                            `/api/recipes?cursor=${encodeURIComponent(cursor)}`,
-                            RecipeList,
-                            undefined,
-                            account.id,
-                          ),
-                        );
-                        setRecords((previous) => [
-                          ...previous,
-                          ...list.recipes.filter(
-                            (row) => !previous.some((old) => old.id === row.id),
-                          ),
-                        ]);
-                        setCursor(list.nextCursor);
-                      } catch (error) {
-                        report(error);
-                      } finally {
-                        setLoading(false);
-                      }
-                    }}
-                  >
-                    Load more recipes
-                  </Button>
-                )}
-                <p className="handwritten index-note">Room for many more favourites.</p>
-              </section>
+                              );
+                            } catch (error) {
+                              report(error);
+                            }
+                          }}
+                        >
+                          <span className="index-number" aria-hidden="true">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <span className="index-recipe-title">{recipe.edited.title}</span>
+                          <span className="index-dots" aria-hidden="true" />
+                          <ArrowUpRight size={18} aria-hidden="true" />
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                  {cursor && (
+                    <Button
+                      variant="outline"
+                      disabled={loading}
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          const list = await currentRequest(
+                            libraryRequest(
+                              `/api/recipes?cursor=${encodeURIComponent(cursor)}`,
+                              RecipeList,
+                              undefined,
+                              account.id,
+                            ),
+                          );
+                          setRecords((previous) => [
+                            ...previous,
+                            ...list.recipes.filter(
+                              (row) => !previous.some((old) => old.id === row.id),
+                            ),
+                          ]);
+                          setCursor(list.nextCursor);
+                        } catch (error) {
+                          report(error);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                    >
+                      Load more recipes
+                    </Button>
+                  )}
+                  <p className="handwritten index-note">Room for many more favourites.</p>
+                </section>
+              </>
             )}
           </div>
         )}

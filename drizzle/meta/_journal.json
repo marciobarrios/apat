@@ -15,6 +15,13 @@
       "when": 1792486903930,
       "tag": "0001_sleepy_justice",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793753261775,
+      "tag": "0002_wonderful_slayback",
+      "breakpoints": true
     }
   ]
 }
