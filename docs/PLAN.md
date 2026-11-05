@@ -1,6 +1,6 @@
 # Resumable implementation plan
 
-Last reconciled: **November 4, 2026 (Europe/Madrid)**. This is the current handoff. Read README, this plan and [ACQUISITION.md](ACQUISITION.md) first. Required stack: Next.js/React/TypeScript, Drizzle/Postgres, Tailwind/shadcn Base UI, pnpm, Oxlint/Oxfmt. Preserve feature branches and unrelated work.
+Last reconciled: **November 5, 2026 (Europe/Madrid)**. This is the current handoff. Read README, this plan and [ACQUISITION.md](ACQUISITION.md) first. Required stack: Next.js/React/TypeScript, Drizzle/Postgres, Tailwind/shadcn Base UI, pnpm, Oxlint/Oxfmt. Preserve feature branches and unrelated work.
 
 ## Current direction
 
@@ -10,8 +10,8 @@ The user requested **Mamitsu** for Instagram and YouTube imports, alongside manu
 
 ## Verified repository/service state
 
-- PR #2 is merged; remote main and this feature's starting point are `890c1e2`. The current worktree is `t3/mamitsu-recipe-import`. Older handoff paths/branch states are historical.
-- Existing Vercel project `apat` has a ready production deployment. Initial inspection found no preview variables; Neon later auto-created branch-scoped database variables. The approved activation now configures this PR branch only, with a restricted application connection and isolated Auth/cookie/origin/credit settings. Only `feat/neon-private-library` is disabled in `vercel.json`.
+- PR #2 is merged; remote main and this feature's starting point are `890c1e2`. The current worktree is `t3/mamitsu-recipe-import`, rebased onto `32bdeaf` from main with the merged whimsical notebook redesign. Older handoff paths/branch states are historical.
+- Existing Vercel project `apat` has a ready production deployment. Initial inspection found no preview variables; Neon later auto-created branch-scoped database variables. The approved activation now configures this PR branch only, with a restricted application connection and isolated Auth/cookie/origin/credit settings. Automatic Git previews are enabled for every PR; main removed `vercel.json` deployment-disable rules.
 - The November 4 Mamitsu Usage inspection was read-only and used the user's explicitly signed-in T3 browser. Existing requests/schemas informed the adapter; they are not live tests of this implementation.
 - Historical production setup and one-account local manual-storage evidence are in [NEON-PRODUCTION-STATUS.md](NEON-PRODUCTION-STATUS.md). Production setup was not repeated. The approved current work applied migration `0002` and restricted role grants only to the verified isolated preview branch; its Auth origin was already trusted.
 
