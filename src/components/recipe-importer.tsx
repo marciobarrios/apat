@@ -134,6 +134,7 @@ export function RecipeImporter({
         accountId,
       );
       if (!alive.current) return;
+      if (!retry) setUrl("");
       setJobs((previous) => [job, ...previous.filter((item) => item.id !== job.id)]);
       if (job.state === "needs_review") setReview(job);
       if (job.state === "cancelled") intent.current = null;

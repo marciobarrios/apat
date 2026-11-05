@@ -225,6 +225,7 @@ test("authored import: restores a pending receipt after navigation without resub
   await page.getByLabel("Instagram or YouTube recipe link").fill("https://youtu.be/abcdefghijk");
   await page.getByRole("button", { name: "Import recipe", exact: true }).click();
   await expect(page.getByText("Reading the video…")).toBeVisible();
+  await expect(page.getByLabel("Instagram or YouTube recipe link")).toHaveValue("");
   await page.reload();
   await expect(page.getByText("Reading the video…")).toBeVisible();
   expect(mock.keys).toHaveLength(1);
@@ -239,6 +240,9 @@ test("authored import: a lost submission response reuses the same intent", async
   await page.getByLabel("Instagram or YouTube recipe link").fill("https://youtu.be/abcdefghijk");
   await page.getByRole("button", { name: "Import recipe", exact: true }).click();
   await expect(page.getByText("Your draft is still here", { exact: false })).toBeVisible();
+  await expect(page.getByLabel("Instagram or YouTube recipe link")).toHaveValue(
+    "https://youtu.be/abcdefghijk",
+  );
   await page.getByRole("button", { name: "Import recipe", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Authored imported recipe" })).toBeVisible();
   expect(mock.keys).toHaveLength(2);
