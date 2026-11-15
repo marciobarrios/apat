@@ -47,4 +47,4 @@ The user requested **Mamitsu** for Instagram and YouTube imports, alongside manu
 
 `pnpm lint`; `pnpm format:check`; `pnpm typecheck`; `pnpm test`; `pnpm build`; `pnpm test:browser`.
 
-Browser tests use the built server and authored fixtures without paid services. PGlite verifies local PostgreSQL behavior, not Neon integration. Builds/startup/CI never migrate or provision services. No paid inference, credentials, external migrations, grants, provisioning or production deployment without explicit approval.
+Browser tests use the built server and authored fixtures without paid services. PGlite verifies local PostgreSQL behavior, not Neon integration. Builds/startup/CI never migrate or provision services. No paid inference, credentials, external migrations, grants, provisioning or manual production deployment without explicit approval. Merging to main (including autopilot auto-merge) and the resulting Vercel production build are pre-approved.
