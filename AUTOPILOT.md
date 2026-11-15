@@ -1,13 +1,12 @@
 # Autopilot
 
 Project settings for the global `autopilot` skill. These override its defaults.
-`AGENTS.md`, `docs/PLAN.md` and their approval gates always win over this file
+`AGENTS.md` and `docs/PLAN.md` approval gates (below) always win over this file
 and over the skill.
 
 ## Basics
 
-- Base branch: `main`. Merge method (when a human merges):
-  `gh pr merge <n> --squash --delete-branch`.
+- Base branch: `main`. Merge method: `gh pr merge <n> --squash --delete-branch`.
 - Linear: team MAR, project Àpat (`P-MAR-5`). Confirm the issue belongs to
   this project before starting.
 - Closing line: use `Closes MAR-123` (this repo's convention), one line per
@@ -15,12 +14,18 @@ and over the skill.
 - Read `README.md` and `docs/PLAN.md` before planning. They record what is
   done, what is gated, and the evidence boundaries.
 
-## Auto-merge: off
+## Merge rules
 
-`docs/PLAN.md` says no merge or auto-merge follows automatically from
-finished code, and production deployment needs explicit approval. Treat every
-run as `no merge`: open the PR, run CI, the Preview check and merge-risk, then
-hand off. Never merge, even at low risk.
+Nobody depends on Apat yet, so favour speed. Auto-merge allowed at **low or
+medium** risk when all checks are green (as if `merge medium` were always
+passed). Merging to `main` and the production build Vercel makes from it are
+pre-approved in `AGENTS.md`. Never auto-merge when the PR:
+
+- adds or changes a migration under `drizzle/` (applying it is a separate,
+  gated step; merge-ready code is fine to hand off),
+- changes roles, grants, auth/session handling, or env var handling,
+- turns on or changes paid inference (Mamitsu calls, credit ceilings),
+- changes CI (`.github/workflows/`) or Vercel configuration.
 
 ## Approval gates (stop and ask, never do)
 
@@ -29,7 +34,8 @@ hand off. Never merge, even at low risk.
 - New credentials, env vars, Vercel or Neon configuration, provisioning.
 - Applying migrations to any external database. Generate and review them
   locally (`pnpm db:generate`, PGlite tests) only.
-- Permission or role/grant changes, production deployment or promotion.
+- Permission or role/grant changes, manual production deployment or
+  promotion (the automatic build after a merge is fine).
 - Personal browser cookies, private Instagram endpoints, access bypass.
 
 If an issue can't be done without one of these, implement what doesn't need
@@ -90,9 +96,11 @@ pnpm test:browser   # needs `pnpm exec playwright install chromium` once
 
 ## Production monitoring
 
-- Production: https://apat-self.vercel.app. Autopilot never merges here, so
-  step 10b doesn't run. After a human merges, a public smoke check of the
-  home page and `/sample` is fine; nothing logged-in.
+- Production: https://apat-self.vercel.app (Vercel project `apat`).
+- After a merge: deployment Ready, public smoke check of the home page and
+  `/sample`, and Vercel runtime errors for 15 min vs the hour before.
+  Nothing logged-in, no imports.
+- On a regression, open a revert PR and auto-merge it once green.
 
 ## Don't
 
